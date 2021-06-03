@@ -1,15 +1,15 @@
 try:
-	from magnetopost.model_patches import SWMF
+    from magnetopost.model_patches import SWMF
 except:
-	pass
+    pass
 try:
-	from magnetopost.model_patches import SWMF2
+    from magnetopost.model_patches import SWMF2
 except:
-	pass
+    pass
 try:
-	from magnetopost.model_patches import LFM
+    from magnetopost.model_patches import LFM
 except:
-	pass
+    pass
 
 
 def get_ms_slice_class(run, time):

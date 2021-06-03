@@ -3,7 +3,7 @@ import ast
 from magnetosphere.config import defined_magnetometers
 
 def Tstr(time, length=6):
-	return '%.4d%.2d%.2dT%.2d%.2d%.2d'%(time[:6])
+    return '%.4d%.2d%.2dT%.2d%.2d%.2d'%(time[:6])
 
 
 def prep_run(confpath):
