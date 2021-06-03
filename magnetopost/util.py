@@ -31,13 +31,17 @@ def prep_run(confpath):
     return run
 
 
-#def get_available_times(run):
-    #times = [md.filename2time(run, fname) for fname in get_available_ms_files()]
-    #return run['magnetosphere_files'].keys()
-
+import spacepy.coordinates as sc
+from spacepy.time import Ticktock
 def GetMagnetometerCoordinates(magnetometer, time, csys, ctype):
-	if isinstance(magnetometer, str):
-		magnetometer = defined_magnetometers[magnetometer]
+    if isinstance(magnetometer, str):
+        magnetometer = defined_magnetometers[magnetometer]
 
-	magnetometer.csys 
-	assert(False)
+    cvals = sc.Coords(v, magnetometer.csys, magnetometer.ctype)
+    if len(t.shape)==1:
+        t_str = '%04d-%02d-%02dT%02d:%02d:%02d'%(time[:6])
+
+    cvals.ticks = Ticktock(t_str, 'ISO')
+    newcoord = cvals.convert(csys, ctype)
+
+    return newcoord.data[0, :]

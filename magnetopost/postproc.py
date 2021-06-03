@@ -3,7 +3,7 @@ from magnetopost import util, models
 from magnetopost.ionosphere_integrals import slice_bs_pedersen
 
 
-def job(points, do_summary=False, cutplanes=None)
+def job(points, do_summary=False, cutplanes=None):
     run = util.parseConfig(f'{os.path.abspath(".")}/PostProcess.conf.py') #returns dictionary
     times = util.get_available_times(run)
 
@@ -21,7 +21,7 @@ def job(points, do_summary=False, cutplanes=None)
     if do_summary: stitch_summary(run, times)
 
 
-def job_iono(points)
+def job_iono(points):
     run = util.prep_run(f'{os.path.abspath(".")}/PostProcess.conf.py') #returns dictionary
     times = run['ionosphere_files'].keys()
 

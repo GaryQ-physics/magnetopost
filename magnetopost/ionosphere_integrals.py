@@ -6,7 +6,7 @@ import datetime
 import os
 import sys
 
-from magnetopost.util import get_ionosphere_filetag
+from magnetopost import util
 from magnetopost.units_and_constants import phys
 
 @njit # Biot Savart integrand (4pi taken outside)
@@ -39,6 +39,12 @@ def _integral_bs(X, Y, Z, obs_point, JX, JY, JZ, Measure):
 
 
 def slice_bs_pedersen(ie_slice, obs_point):
+    obs_point_str = obs_point
+    if obs_point == "origin":
+        obs_point = np.zeros(3)
+    else:
+        obs_point = GetMagnetometerCoordinates(obs_point_str, time, 'SM', 'car')
+
     data_arr, varidx, units = ie_slice
 
     X  = data_arr[varidx['X'], :]
@@ -57,7 +63,11 @@ def slice_bs_pedersen(ie_slice, obs_point):
     scalefact = phys['mu0']*phys['Siemens']*phys['mV']/phys['m']
 
     integral = scalefact*_integral_bs(X,Y,Z,obs_point,KX,KY,KZ,Measure)
-    print(integral)
+
+    outname = '/home/gquaresi/timeseries/slices/' \
+        + f'BS_pedersen_{util.Tstr(time)}_obs_point={obs_point_str}.npy'
+
+    np.save(outname, integral)
 
 
 def slice_integral_bs_bulkiono(ie_slice, obs_point):

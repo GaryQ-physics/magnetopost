@@ -4,7 +4,7 @@ install_requires = ["numpy","pandas"]
 
 setup(
     name='magnetopost',
-    version='0.0.0',
+    version='0.0.0.1',
     author='Gary Quaresima',
     author_email='garyquaresima@gmail.com',
     packages=find_packages(),

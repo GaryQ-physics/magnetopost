@@ -6,17 +6,9 @@ $ ls
  derived/
  GM/
  Param.in
- PostProcessConfig.txt
-$ cat PostProcess.conf.py
-{
-  "model"                 : "SWMF"
-  "run_name"              : "DIPTSUR2"
-  "magnetosphere_files"   : "./GM/IO2/"
-  "ionosphere_files"      : "./IE/ionosphere/"
-  "magnetometer_files"    : "./GM/IO2/"
-
-  "rCurrents"             : 1.8
- }
+ run.info.py
+ magnetosphere_files.txt
+ ionosphere_files.txt
 
 $ cat run.info.py
 {
@@ -49,4 +41,5 @@ $ cat ionosphere_files.txt
 
 
 $ python -c 'from magnetopost import postproc; postproc.job(("colaba", "GMpoint1"), do_summary=True)'
+$ python -c 'from magnetopost import postproc; postproc.job_iono(("colaba",))'
 ```
