@@ -3,16 +3,17 @@ Magnetometer = namedtuple('Magnetometer', ['name','csys','ctype','coords'])
 
 
 defined_magnetometers = {
-    'YKC'      : Magnetometer(name='YKC'     ,csys='GEO',ctype='sph',coord=(1.,  62.480 ,  245.518 ) ),
-    'FRN'      : Magnetometer(name='FRN'     ,csys='GEO',ctype='sph',coord=(1.,  37.0913, -119.7193) ),
-    'FUR'      : Magnetometer(name='FUR'     ,csys='GEO',ctype='sph',coord=(1.,  48.17  ,  11.28   ) ),
-    'colaba'   : Magnetometer(name='colaba'  ,csys='GEO',ctype='sph',coord=(1.,  18.907 ,  72.815  ) ),
-    'GMpoint1' : Magnetometer(name='GMpoint1',csys='GSM',ctype='car',coord=(0.71875,0.09375,-3.71875) ),
+    'YKC'      : Magnetometer(name='YKC'     ,csys='GEO',ctype='sph',coords=(1.,  62.480 ,  245.518 ) ),
+    'FRN'      : Magnetometer(name='FRN'     ,csys='GEO',ctype='sph',coords=(1.,  37.0913, -119.7193) ),
+    'FUR'      : Magnetometer(name='FUR'     ,csys='GEO',ctype='sph',coords=(1.,  48.17  ,  11.28   ) ),
+    'colaba'   : Magnetometer(name='colaba'  ,csys='GEO',ctype='sph',coords=(1.,  18.907 ,  72.815  ) ),
+    'GMpoint1' : Magnetometer(name='GMpoint1',csys='GSM',ctype='car',coords=(0.71875,0.09375,-3.71875) ),
     }
 
 
 
 ########################################################################
+import os
 import resource
 
 if os.path.exists('/home/gary/'):

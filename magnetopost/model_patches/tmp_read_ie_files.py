@@ -107,9 +107,18 @@ def read_iono_tec(filename):
     for i in range(22):
         assert(np.all( north[:,i].reshape((181,91))[:, 90] == south[:,i].reshape((181,91))[:, 0] ))
         if i!=4:
-            assert(np.all(np.abs( north[:,i].reshape((181,91))[0, :] - north[:,i].reshape((181,91))[-1, :]) < 1e-15))
-            assert(np.all(np.abs( south[:,i].reshape((181,91))[0, :] - south[:,i].reshape((181,91))[-1, :]) < 1e-15))
-        
+            test = np.max(np.abs( north[:,i].reshape((181,91))[0, :] - north[:,i].reshape((181,91))[-1, :] ))
+            if test>1e-15:
+                print('WARNING ' \
+                 +'np.max(np.abs( north[:,i].reshape((181,91))[0, :] - north[:,i].reshape((181,91))[-1, :] )) > 1e-15' \
+                 +f'is actually {test}')
+
+            test = np.max(np.abs( south[:,i].reshape((181,91))[0, :] - south[:,i].reshape((181,91))[-1, :] ))
+            if test>1e-15:
+                print('WARNING ' \
+                 +'np.max(np.abs( south[:,i].reshape((181,91))[0, :] - south[:,i].reshape((181,91))[-1, :] )) > 1e-15' \
+                 +f'is actually {test}')
+
         # the following are not the exact same point, due to theta being 0.0057296 and 179.99 instead of 0.0 and 180.0 respectively.
         # But we ignore the fudging, for the purpose of obtaing a good measure, and average over them and asign to a unique point.
         # One for north pole and one for south pole. 

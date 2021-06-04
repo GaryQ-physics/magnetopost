@@ -33,17 +33,17 @@ def _integral_bs(X, Y, Z, obs_point, JX, JY, JZ, Measure):
     for i in range(X.size):
 
         # 'measure' refers to integration measure ( dx, dV, dA, whatever apropriate)
-        ret[:] = ret[:] + integrand_bs(X[i], Y[i], Z[i], obs_point, KX[i], KY[i], KZ[i]) * Measure[i]
+        ret[:] = ret[:] + _integrand_bs(X[i], Y[i], Z[i], obs_point, JX[i], JY[i], JZ[i]) * Measure[i]
 
     return ret/(4.*np.pi)
 
 
-def slice_bs_pedersen(ie_slice, obs_point):
+def slice_bs_pedersen(run, time, ie_slice, obs_point):
     obs_point_str = obs_point
     if obs_point == "origin":
         obs_point = np.zeros(3)
     else:
-        obs_point = GetMagnetometerCoordinates(obs_point_str, time, 'SM', 'car')
+        obs_point = util.GetMagnetometerCoordinates(obs_point_str, time, 'SM', 'car')
 
     data_arr, varidx, units = ie_slice
 

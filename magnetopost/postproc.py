@@ -29,7 +29,7 @@ def job_iono(points):
     def wrap(time):
         ie_slice = models.get_iono_slice(run, time)
         for point in points:
-            slice_bs_pedersen(ie_slice, point)
+            slice_bs_pedersen(run,time, ie_slice, point)
 
     for time in times:
         wrap(time)
