@@ -97,10 +97,6 @@ def slice_bs_pedersen(run, time, ie_slice, obs_point):
 
 def stitch_bs_pedersen(run, times, obs_point):
     obs_point_str = obs_point
-    if obs_point == "origin":
-        obs_point = np.zeros(3)
-    else:
-        obs_point = util.GetMagnetometerCoordinates(obs_point_str, time, 'SM', 'car')
 
     columns = ['B_bs_pedersen_x', 'B_bs_pedersen_y', 'B_bs_pedersen_z']
     df_name = f'{run["rundir"]}/derived/timeseries/' \
@@ -150,10 +146,6 @@ def slice_bs_hall(run, time, ie_slice, obs_point):
 
 def stitch_bs_hall(run, times, obs_point):
     obs_point_str = obs_point
-    if obs_point == "origin":
-        obs_point = np.zeros(3)
-    else:
-        obs_point = util.GetMagnetometerCoordinates(obs_point_str, time, 'SM', 'car')
 
     columns = ['B_bs_hall_x', 'B_bs_hall_y', 'B_bs_hall_z']
     df_name = f'{run["rundir"]}/derived/timeseries/' \

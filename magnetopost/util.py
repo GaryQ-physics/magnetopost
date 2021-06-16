@@ -36,8 +36,6 @@ def prep_run(rundir):
 import spacepy.coordinates as sc
 from spacepy.time import Ticktock
 def GetMagnetometerCoordinates(magnetometer, time, csys, ctype):
-    print(time)
-
     if isinstance(magnetometer, str):
         magnetometer = defined_magnetometers[magnetometer]
 
