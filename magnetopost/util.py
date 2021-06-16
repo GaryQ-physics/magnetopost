@@ -6,26 +6,28 @@ def Tstr(time, length=6):
     return '%.4d%.2d%.2dT%.2d%.2d%.2d'%(time[:6])
 
 
-def prep_run(confpath):
-    if not confpath[-1]=='/': confpath = f'{confpath}/'
+def prep_run(rundir):
+    if not rundir[-1]=='/': rundir = f'{rundir}/'
 
-    with open(f'{confpath}derived/run.info.py', 'r') as f:
+    with open(f'{rundir}derived/run.info.py', 'r') as f:
         run = ast.literal_eval(f.read())
 
+    run['rundir'] = rundir
+
     run['magnetosphere_files'] = {}
-    with open(confpath+'derived/magnetosphere_files.txt', 'r') as f:
+    with open(rundir+'derived/magnetosphere_files.txt', 'r') as f:
         for line in f.readlines():
             items = line.split(' ')
             time = tuple([int(ti) for ti in items[:6]])
-            filename = f'{confpath}{items[-1][:-1]}'
+            filename = f'{rundir}{items[-1][:-1]}'
             run['magnetosphere_files'][time] = filename
 
     run['ionosphere_files'] = {}
-    with open(confpath+'derived/ionosphere_files.txt', 'r') as f:
+    with open(rundir+'derived/ionosphere_files.txt', 'r') as f:
         for line in f.readlines():
             items = line.split(' ')
             time = tuple([int(ti) for ti in items[:6]])
-            filename = f'{confpath}{items[-1][:-1]}'
+            filename = f'{rundir}{items[-1][:-1]}'
             run['ionosphere_files'][time] = filename
 
     return run

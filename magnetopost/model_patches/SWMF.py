@@ -1,11 +1,10 @@
 import subprocess
-from swmf_file_reader import read_swmf_files as rswmf
-#from swmf_file_reader.read_ie_files import read_iono_tec
-from magnetopost.model_patches.tmp_read_ie_files import read_iono_tec
+from swmf_file_reader import batsrus_class as bats
+from swmf_file_reader.read_ie_files import read_iono_tec
 
 def get_ms_slice_class(filename):
     assert(filename[-4:] == '.out')
-    return rswmf.return_class(filename[:-4])
+    return bats.return_class(filename[:-4])
 
 
 def get_iono_slice(filename):
