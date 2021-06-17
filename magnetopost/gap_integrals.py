@@ -150,9 +150,6 @@ def slice_bs_fac(run, time, ms_slice, obs_point, nTheta=181,nPhi=180,nR=30, gap_
     dB_fac, dB_mhd_SurfaceIntegral = _jit_gap_region_integrals(ms_slice, GM_2_gap, x0, nTheta,nPhi,nR, run['rCurrents'])
     dB_fac = (phys['mu0']*phys['muA']/phys['m']**2) * dB_fac
 
-    print(dB_fac)
-    print(dB_mhd_SurfaceIntegral)
-
     outname_fac = f'{run["rundir"]}/derived/timeseries/slices/' \
         + f'bs_fac-{obs_point_str}-{util.Tstr(time)}.npy'
 
