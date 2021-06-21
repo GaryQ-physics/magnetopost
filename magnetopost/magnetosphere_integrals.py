@@ -49,7 +49,7 @@ def _jit_B_biotsavart(ms_slice, x0, rcut):
     return integral
 
 
-def slice_bs_msph(run, times, ms_slice, obs_point):
+def slice_bs_msph(run, time, ms_slice, obs_point):
     funcnameStr = 'bs_msph'
 
     if obs_point == "origin":

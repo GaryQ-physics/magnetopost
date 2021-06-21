@@ -19,7 +19,7 @@ def job_ie(points, stitch_only=False):
     if not stitch_only:
         if False:
             for time in times:
-                wrap_ie(time)
+                wrap(time)
         else:
             from joblib import Parallel, delayed
             import multiprocessing
@@ -48,7 +48,7 @@ def job_ms(points, do_summary=False, cutplanes=None, stitch_only=False):
     if not stitch_only:
         if False:
             for time in times:
-                wrap_ie(time)
+                wrap(time)
         else:
             from joblib import Parallel, delayed
             import multiprocessing
@@ -64,7 +64,7 @@ def job_ms(points, do_summary=False, cutplanes=None, stitch_only=False):
 
 
 def main():
-    job_ie(("colaba",))
+    #job_ie(("colaba",))
     job_ms(("colaba",))
 
 if __name__ == '__main__':
