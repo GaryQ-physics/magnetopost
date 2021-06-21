@@ -131,12 +131,12 @@ def _jit_gap_region_integrals(ms_slice, GM_2_gap, x0, nTheta,nPhi,nR, rCurrents)
     return dB_fac, dB_mhd_SurfaceIntegral
 
 def slice_bs_fac(run, time, ms_slice, obs_point, nTheta=181,nPhi=180,nR=30, gap_csys='SM'):
-    obs_point_str = obs_point
+    funcnameStr = 'bs_fac'
+
     if obs_point == "origin":
         x0 = np.zeros(3)
     else:
-        x0 = util.GetMagnetometerCoordinates(obs_point_str, time, 'SM', 'car')
-    x0 = np.array(x0)
+        x0 = util.GetMagnetometerCoordinates(obs_point, time, 'SM', 'car')
 
     GM_csys = 'GSM'
     assert(gap_csys=='SM')
@@ -150,43 +150,41 @@ def slice_bs_fac(run, time, ms_slice, obs_point, nTheta=181,nPhi=180,nR=30, gap_
     dB_fac, dB_mhd_SurfaceIntegral = _jit_gap_region_integrals(ms_slice, GM_2_gap, x0, nTheta,nPhi,nR, run['rCurrents'])
     dB_fac = (phys['mu0']*phys['muA']/phys['m']**2) * dB_fac
 
-    outname_fac = f'{run["rundir"]}/derived/timeseries/slices/' \
-        + f'bs_fac-{obs_point_str}-{util.Tstr(time)}.npy'
+    outname = f'{run["rundir"]}/derived/timeseries/slices/' \
+        + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
 
-    outname_surf = f'{run["rundir"]}/derived/timeseries/slices/' \
-        + f'helm_rCurrent-{obs_point_str}-{util.Tstr(time)}.npy'
+    outname_SURF = f'{run["rundir"]}/derived/timeseries/slices/' \
+        + f'helm_rCurrent-{obs_point}-{util.Tstr(time)}.npy'
 
-    np.save(outname_fac, dB_fac)
-    np.save(outname_surf, dB_mhd_SurfaceIntegral)
+    np.save(outname, dB_fac)
+    np.save(outname_SURF, dB_mhd_SurfaceIntegral)
 
-def stitch_bs_fac(run, times, obs_point, nTheta=181,nPhi=180,nR=30, gap_csys='SM'):
-    assert(gap_csys=='SM')
-    obs_point_str = obs_point
 
-    outname_surf = f'{run["rundir"]}/derived/timeseries/' \
-        + f'helm_rCurrent-{obs_point_str}.pkl'
+def stitch_bs_fac(run, times, obs_point):
+    funcnameStr = 'bs_fac'
 
-    dtimes = []
-    slice_arrays = []
+    integrals = []
     for time in times:
-        dtimes.append(datetime.datetime(*time[:6]))
+        outname = f'{run["rundir"]}/derived/timeseries/slices/' \
+            + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
 
-        outname_fac = f'{run["rundir"]}/derived/timeseries/slices/' \
-            + f'bs_fac-{obs_point_str}-{util.Tstr(time)}.npy'
+        integrals.append(np.load(outname))
 
-        outname_surf = f'{run["rundir"]}/derived/timeseries/slices/' \
+    arr_name = f'{run["rundir"]}/derived/timeseries/' \
+            + f'{funcnameStr}-{obs_point}.npy'
+    arr = np.array(integrals)
+    np.save(arr_name, arr)
+
+    integrals_SURF = []
+    for time in times:
+        outname_SURF = f'{run["rundir"]}/derived/timeseries/slices/' \
             + f'helm_rCurrent-{obs_point_str}-{util.Tstr(time)}.npy'
+        integrals_SURF.append(np.load(outname_SURF))
 
-        dB_fac = np.load(outname_fac)
-        dB_mhd_SurfaceIntegral = np.load(outname_surf)
-
-        slice_arrays.append(np.concatenate([dB_fac,dB_mhd_SurfaceIntegral]))
-
-    columns = ('B_biotsavart_fac_x','B_biotsavart_fac_y','B_biotsavart_fac_z',
-            'B_helmholtz_rCurrents_x', 'B_helmholtz_rCurrents_y', 'B_helmholtz_rCurrents_z')
-    df = pd.DataFrame(data=slice_arrays, columns = columns,
-                        index=dtimes)
-    df.to_pickle(df_name)
+    arr_name_SURF = f'{run["rundir"]}/derived/timeseries/' \
+            + f'helm_rCurrent-{obs_point}.npy'
+    arr_SURF = np.array(integrals_SURF)
+    np.save(arr_name_SURF, arr_SURF)
 
 if __name__ == '__main__':
     from magnetopost.model_patches import SWMF

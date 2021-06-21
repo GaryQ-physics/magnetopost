@@ -8,19 +8,7 @@ import sys
 
 from magnetopost import util
 from magnetopost.units_and_constants import phys
-
-
-@njit
-def get_dipole_field(xyz):
-    # Xyz_D and returned b_D in SMG (SM) coordinates
-    b = np.empty(3)
-    r = np.linalg.norm(xyz)
-    DipoleStrength = 3.12e+4 #"dipole moment"(not really) in  nT * R_e**3  # https://en.wikipedia.org/wiki/Dipole_model_of_the_Earth%27s_magnetic_field
-    Term1      = DipoleStrength*xyz[2]*3/r**2
-    b[0:2] = Term1*xyz[0:2]/r**3
-    b[2]    = (Term1*xyz[2]-DipoleStrength)/r**3
-    return b
-
+from magnetopost.gap_integrals import get_dipole_field
 
 @njit()
 def get_dipole_field_V(xyz):
@@ -66,11 +54,12 @@ def _integral_bs(X, Y, Z, obs_point, JX, JY, JZ, Measure):
 #          Jp_IID(i,j,:) = eIono_IID(i,j,:) * SigmaP(i,j)
 
 def slice_bs_pedersen(run, time, ie_slice, obs_point):
-    obs_point_str = obs_point
+    funcnameStr = 'bs_pedersen'
+
     if obs_point == "origin":
-        obs_point = np.zeros(3)
+        x0 = np.zeros(3)
     else:
-        obs_point = util.GetMagnetometerCoordinates(obs_point_str, time, 'SM', 'car')
+        x0 = util.GetMagnetometerCoordinates(obs_point, time, 'SM', 'car')
 
     data_arr, varidx, units = ie_slice
 
@@ -88,40 +77,20 @@ def slice_bs_pedersen(run, time, ie_slice, obs_point):
     assert( units['SigmaP'] == 'S' and units['Ex'] == 'mV/m' and units['X'] == 'R' )
     scalefact = phys['mu0']*phys['Siemens']*phys['mV']/phys['m']
 
-    integral = scalefact*_integral_bs(X,Y,Z,obs_point,KX,KY,KZ,Measure)
+    integral = scalefact*_integral_bs(X,Y,Z,x0,KX,KY,KZ,Measure)
 
-    outname = f'{run["rundir"]}/derived/timeseries/slices/' + f'bs_pedersen-{obs_point_str}-{util.Tstr(time)}.npy'
-
+    outname = f'{run["rundir"]}/derived/timeseries/slices/' \
+        + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
     np.save(outname, integral)
 
 
-def stitch_bs_pedersen(run, times, obs_point):
-    obs_point_str = obs_point
-
-    columns = ['B_bs_pedersen_x', 'B_bs_pedersen_y', 'B_bs_pedersen_z']
-    df_name = f'{run["rundir"]}/derived/timeseries/' \
-            + f'bs_pedersen-{obs_point_str}.pkl'
-
-    dtimes = []
-    integrals = []
-    for time in times:
-        outname = f'{run["rundir"]}/derived/timeseries/slices/' \
-            + f'bs_pedersen-{obs_point_str}-{util.Tstr(time)}.npy'
-
-        integrals.append(np.load(outname))
-        dtimes.append(datetime.datetime(time[0],time[1],time[2],time[3],time[4],time[5]))
-
-    df = pd.DataFrame(data=integrals, columns = columns,
-                        index=dtimes)
-    df.to_pickle(df_name)
-
-
 def slice_bs_hall(run, time, ie_slice, obs_point):
-    obs_point_str = obs_point
+    funcnameStr = 'bs_hall'
+
     if obs_point == "origin":
-        obs_point = np.zeros(3)
+        x0 = np.zeros(3)
     else:
-        obs_point = util.GetMagnetometerCoordinates(obs_point_str, time, 'SM', 'car')
+        x0 = util.GetMagnetometerCoordinates(obs_point, time, 'SM', 'car')
 
     data_arr, varidx, units = ie_slice
 
@@ -136,35 +105,43 @@ def slice_bs_hall(run, time, ie_slice, obs_point):
     assert( units['SigmaP'] == 'S' and units['Ex'] == 'mV/m' and units['X'] == 'R' )
     scalefact = phys['mu0']*phys['Siemens']*phys['mV']/phys['m']
 
-    integral = scalefact*_integral_bs(XYZ[:,0],XYZ[:,1],XYZ[:,2],obs_point,K[:,0],K[:,1],K[:,2],Measure)
+    integral = scalefact*_integral_bs(XYZ[:,0],XYZ[:,1],XYZ[:,2],x0,K[:,0],K[:,1],K[:,2],Measure)
 
     outname = f'{run["rundir"]}/derived/timeseries/slices/' \
-        + f'bs_hall-{obs_point_str}-{util.Tstr(time)}.npy'
-
+        + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
     np.save(outname, integral)
 
 
-def stitch_bs_hall(run, times, obs_point):
-    obs_point_str = obs_point
+def stitch_bs_pedersen(run, times, obs_point):
+    funcnameStr = 'bs_pedersen'
 
-    columns = ['B_bs_hall_x', 'B_bs_hall_y', 'B_bs_hall_z']
-    df_name = f'{run["rundir"]}/derived/timeseries/' \
-            + f'bs_hall-{obs_point_str}.pkl'
-
-    dtimes = []
     integrals = []
     for time in times:
         outname = f'{run["rundir"]}/derived/timeseries/slices/' \
-            + f'bs_hall-{obs_point_str}-{util.Tstr(time)}.npy'
+            + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
 
         integrals.append(np.load(outname))
-        dtimes.append(datetime.datetime(time[0],time[1],time[2],time[3],time[4],time[5]))
 
-    df = pd.DataFrame(data=integrals, columns = columns,
-                        index=dtimes)
-    df.to_pickle(df_name)
+    arr_name = f'{run["rundir"]}/derived/timeseries/' \
+            + f'{funcnameStr}-{obs_point}.npy'
+    arr = np.array(integrals)
+    np.save(arr_name, arr)
 
 
+def stitch_bs_hall(run, times, obs_point):
+    funcnameStr = 'bs_hall'
+
+    integrals = []
+    for time in times:
+        outname = f'{run["rundir"]}/derived/timeseries/slices/' \
+            + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
+
+        integrals.append(np.load(outname))
+
+    arr_name = f'{run["rundir"]}/derived/timeseries/' \
+            + f'{funcnameStr}-{obs_point}.npy'
+    arr = np.array(integrals)
+    np.save(arr_name, arr)
 
 
 def slice_integral_bs_bulkiono(ie_slice, obs_point):
