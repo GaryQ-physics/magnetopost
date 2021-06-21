@@ -24,7 +24,7 @@ def job_ie(points, stitch_only=False):
             from joblib import Parallel, delayed
             import multiprocessing
             num_cores = multiprocessing.cpu_count()
-            num_cores = min(num_cores, ntimes), 20)
+            num_cores = min(num_cores, len(times), 20)
             print(f'Parallel processing {len(times)} ionosphere slices using {num_cores} cores')
             Parallel(n_jobs=num_cores)(\
                       delayed(wrap)(time) for time in times)
@@ -53,7 +53,7 @@ def job_ms(points, do_summary=False, cutplanes=None, stitch_only=False):
             from joblib import Parallel, delayed
             import multiprocessing
             num_cores = multiprocessing.cpu_count()
-            num_cores = min(num_cores, ntimes), 20)
+            num_cores = min(num_cores, len(times), 20)
             print(f'Parallel processing {len(times)} ionosphere slices using {num_cores} cores')
             Parallel(n_jobs=num_cores)(\
                       delayed(wrap)(time) for time in times)
