@@ -178,7 +178,7 @@ def stitch_bs_fac(run, times, obs_point):
     integrals_SURF = []
     for time in times:
         outname_SURF = f'{run["rundir"]}/derived/timeseries/slices/' \
-            + f'helm_rCurrent-{obs_point_str}-{util.Tstr(time)}.npy'
+            + f'helm_rCurrent-{obs_point}-{util.Tstr(time)}.npy'
         integrals_SURF.append(np.load(outname_SURF))
 
     arr_name_SURF = f'{run["rundir"]}/derived/timeseries/' \

@@ -24,9 +24,9 @@ def _jit_B_biotsavart(ms_slice, x0, rcut):
         partials_by = ms_slice.get_native_partial_derivatives(ind, 'by')
         partials_bz = ms_slice.get_native_partial_derivatives(ind, 'bz')
 
-        curl_B1_z = partial_by[0] - partial_bx[1]
-        curl_B1_x = partial_bz[1] - partial_by[2]
-        curl_B1_y = partial_bx[2] - partial_bz[0]
+        curl_B1_z = partials_by[0] - partials_bx[1]
+        curl_B1_x = partials_bz[1] - partials_by[2]
+        curl_B1_y = partials_bx[2] - partials_bz[0]
 
         r_x = x0[0] - x
         r_y = x0[1] - y
@@ -56,7 +56,6 @@ def slice_bs_msph(run, time, ms_slice, obs_point):
         x0 = np.zeros(3)
     else:
         x0 = util.GetMagnetometerCoordinates(obs_point, time, 'GSM', 'car')
-
     integral = _jit_B_biotsavart(ms_slice, x0, run['rCurrents'])
     
     outname = f'{run["rundir"]}/derived/timeseries/slices/' \

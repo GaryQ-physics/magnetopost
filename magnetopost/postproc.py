@@ -65,7 +65,7 @@ def job_ms(points, do_summary=False, cutplanes=None, stitch_only=False):
 
 def main():
     #job_ie(("colaba",))
-    job_ms(("colaba",))
+    job_ms(("colaba",), stitch_only=True)
 
 if __name__ == '__main__':
     main()
