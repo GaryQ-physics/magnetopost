@@ -46,7 +46,7 @@ def _jit_B_biotsavart(ms_slice, x0, rcut):
 
     #for i_eps in range(n_eps):
     #    ret[i_eps,:] = ( (unique_epsilons[i_eps]**3)/(4*np.pi) ) * ret[i_eps,:]
-    return integral
+    return ( 1./(4*np.pi) )* integral
 
 
 def slice_bs_msph(run, time, ms_slice, obs_point):
