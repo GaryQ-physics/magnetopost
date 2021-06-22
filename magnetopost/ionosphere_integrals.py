@@ -165,7 +165,22 @@ def slice_integral_bs_bulkiono(ie_slice, obs_point):
 
 
 if __name__ == '__main__':
-    from magnetopost.model_patches import SWMF
-    sl = SWMF.get_iono_slice('/home/gary/temp/i_e20190902-041100-000.tec')
-    slice_bs_hall(None, (2019,9,2,4,11,0), sl, "origin")
+    #from magnetopost.model_patches import SWMF
+    #sl = SWMF.get_iono_slice('/home/gary/temp/i_e20190902-041100-000.tec')
+    #data_arr, varidx, units = sl
+    #print(varidx)
+    #print(units)
+    #print(data_arr.shape)
+    #
+    #X  = data_arr[varidx['X'] , :]
+    #Y  = data_arr[varidx['Y'] , :]
+    #Z  = data_arr[varidx['Z'] , :]
+    #
+    #R = np.sqrt(X**2 + Y**2 + Z**2)
+    #print(R)
+    ## from swmf's PostIONO.f90
+    #Radius = (6378.+100.)/6378.
+    #print(Radius)
+
+    #slice_bs_hall(None, (2019,9,2,4,11,0), sl, "origin")
 

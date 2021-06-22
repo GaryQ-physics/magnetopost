@@ -20,13 +20,13 @@ def _jit_B_biotsavart(ms_slice, x0, rcut):
         if distanceSquared < rcut**2:
             continue
 
-        partials_bx = ms_slice.get_native_partial_derivatives(ind, 'bx')
-        partials_by = ms_slice.get_native_partial_derivatives(ind, 'by')
-        partials_bz = ms_slice.get_native_partial_derivatives(ind, 'bz')
+        partials_b1x = ms_slice.get_native_partial_derivatives(ind, 'b1x')
+        partials_b1y = ms_slice.get_native_partial_derivatives(ind, 'b1y')
+        partials_b1z = ms_slice.get_native_partial_derivatives(ind, 'b1z')
 
-        curl_B1_z = partials_by[0] - partials_bx[1]
-        curl_B1_x = partials_bz[1] - partials_by[2]
-        curl_B1_y = partials_bx[2] - partials_bz[0]
+        curl_B1_z = partials_b1y[0] - partials_b1x[1]
+        curl_B1_x = partials_b1z[1] - partials_b1y[2]
+        curl_B1_y = partials_b1x[2] - partials_b1z[0]
 
         r_x = x0[0] - x
         r_y = x0[1] - y
