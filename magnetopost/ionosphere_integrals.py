@@ -19,12 +19,12 @@ def get_dipole_field_V(xyz):
     return b
 
 @njit # Biot Savart integrand (4pi taken outside)
-def _integrand_bs(x, y, z, obs_point, jx, jy, jz):
+def _integrand_bs(x, y, z, x0, jx, jy, jz):
     integrand = np.empty((3,),dtype=np.float32); integrand[:]=np.nan
 
-    r_x = obs_point[0] - x
-    r_y = obs_point[1] - y
-    r_z = obs_point[2] - z
+    r_x = x0[0] - x
+    r_y = x0[1] - y
+    r_z = x0[2] - z
     r = np.sqrt(r_x**2 + r_y**2 + r_z**2)
     if r > 1e-5:
         integrand[2] = jx*r_y - jy*r_x
@@ -37,12 +37,12 @@ def _integrand_bs(x, y, z, obs_point, jx, jy, jz):
     return integrand
 
 @njit
-def _integral_bs(X, Y, Z, obs_point, JX, JY, JZ, Measure):
+def _integral_bs(X, Y, Z, x0, JX, JY, JZ, Measure):
     ret = np.zeros((3,), dtype=np.float32)
     for i in range(X.size):
 
         # 'measure' refers to integration measure ( dx, dV, dA, whatever apropriate)
-        ret[:] = ret[:] + _integrand_bs(X[i], Y[i], Z[i], obs_point, JX[i], JY[i], JZ[i]) * Measure[i]
+        ret[:] = ret[:] + _integrand_bs(X[i], Y[i], Z[i], x0, JX[i], JY[i], JZ[i]) * Measure[i]
 
     return ret/(4.*np.pi)
 
@@ -102,7 +102,7 @@ def slice_bs_hall(run, time, ie_slice, obs_point):
     K = np.cross(unit_b_dipole, E_iono) * data_arr[varidx['SigmaH'],:][:,None]
     Measure = data_arr[varidx['measure'],:]
 
-    assert( units['SigmaP'] == 'S' and units['Ex'] == 'mV/m' and units['X'] == 'R' )
+    assert( units['SigmaH'] == 'S' and units['Ex'] == 'mV/m' and units['X'] == 'R' )
     scalefact = phys['mu0']*phys['Siemens']*phys['mV']/phys['m']
 
     integral = scalefact*_integral_bs(XYZ[:,0],XYZ[:,1],XYZ[:,2],x0,K[:,0],K[:,1],K[:,2],Measure)
@@ -159,7 +159,7 @@ def slice_integral_bs_bulkiono(ie_slice, obs_point):
     assert( units['Jx'] == "`mA/m^2" and units['X'] == "R" )
     scalefact = phys['mu0']*phys['muA']/(phys['m']**2)
 
-    integral = scalefact*_integral_bs(X,Y,Z,obs_point,Jx,Jy,Jz,Measure)
+    integral = scalefact*_integral_bs(X,Y,Z,x0,Jx,Jy,Jz,Measure)
     print(integral)
 
 

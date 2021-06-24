@@ -12,16 +12,17 @@ amin = deg/60.
 minn = hr/60.
 s = minn/60.
 
+
+m = R_e/6.3781e+6  # R_e == 6.3781e+6*m  (note m < 10^-6 Re)        6371.0008?????
 A = 1e+6*muA
 Tesla = 1e+9*nT
-m = R_e/6.3781e+6  # R_e == 6.3781e+6*m  (note m < 10^-6 Re)        6371.0008?????
 kg = Tesla*A*s**2
 Gauss = 1e-4*Tesla
 Coulomb = A/s
 V = (kg*m**2/s**2)/Coulomb
 mV = 1e-3*V
 Ohm = V/A
-Siemens = 1/Ohm
+Siemens = 1./Ohm
 
 mu0_SI = 1.25663706212e-6 # almost 4*pi*1e-7
 if False:
