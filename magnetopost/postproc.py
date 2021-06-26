@@ -1,9 +1,10 @@
 import os
 from magnetopost import util, models
-#from magnetopost.summarize import slice_summary, stitch_summary
+from magnetopost.summarize import slice_summary, stitch_summary
 from magnetopost.gap_integrals import slice_bs_fac, stitch_bs_fac
 from magnetopost.ionosphere_integrals import slice_bs_pedersen, stitch_bs_pedersen, slice_bs_hall, stitch_bs_hall
 from magnetopost.magnetosphere_integrals import slice_bs_msph, stitch_bs_msph, slice_cl_msph, stitch_cl_msph
+from magnetopost.boundary_integrals import slice_helm_outer, stitch_helm_outer
 
 def job_ie(points, stitch_only=False):
     run = util.prep_run(f'{os.path.abspath(".")}/') #returns dictionary
@@ -45,6 +46,10 @@ def job_ms(points, do_summary=False, cutplanes=None, stitch_only=False):
             slice_bs_fac(run,time, ms_slice, point)
             slice_bs_msph(run,time, ms_slice, point)
             slice_cl_msph(run,time, ms_slice, point)
+            slice_helm_outer(run, time, ms_slice, point)
+
+        if do_summarize:
+            slice_summary(run, time)
 
     if not stitch_only:
         if False:
@@ -63,11 +68,15 @@ def job_ms(points, do_summary=False, cutplanes=None, stitch_only=False):
         stitch_bs_fac(run, times, point)
         stitch_bs_msph(run, times, point)
         stitch_cl_msph(run, times, point)
+        stitch_helm_outer(run, times, point)
 
+
+    if do_summarize:
+        stitch_summary(run, times)
 
 def main():
     job_ie(("colaba","gridpnt1","gridpnt2"))
-    job_ms(("colaba","gridpnt1","gridpnt2"))
+    job_ms(("colaba","gridpnt1","gridpnt2"), do_summary=True)
 
 if __name__ == '__main__':
     main()
