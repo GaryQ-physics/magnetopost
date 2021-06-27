@@ -113,7 +113,7 @@ def slice_summary(run, time, ms_slice):
     summary = _jit_stats_summary(ms_slice, run['rCurrents'])
 
     outname = f'{run["rundir"]}/derived/timeseries/slices/' \
-        + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
+        + f'{funcnameStr}-{util.Tstr(time)}.npy'
     np.save(outname, summary)
 
 def stitch_summary(run, times):
@@ -122,12 +122,12 @@ def stitch_summary(run, times):
     summarys = []
     for time in times:
         outname = f'{run["rundir"]}/derived/timeseries/slices/' \
-            + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
+            + f'{funcnameStr}-{util.Tstr(time)}.npy'
 
         summarys.append(np.load(outname))
 
     arr_name = f'{run["rundir"]}/derived/timeseries/' \
-            + f'{funcnameStr}-{obs_point}.npy'
+            + f'{funcnameStr}.npy'
     arr = np.array(summarys)
     np.save(arr_name, arr)
 

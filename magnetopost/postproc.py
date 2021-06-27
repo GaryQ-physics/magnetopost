@@ -48,8 +48,8 @@ def job_ms(points, do_summary=False, cutplanes=None, stitch_only=False):
             slice_cl_msph(run,time, ms_slice, point)
             slice_helm_outer(run, time, ms_slice, point)
 
-        if do_summarize:
-            slice_summary(run, time)
+        if do_summary:
+            slice_summary(run, time, ms_slice)
 
     if not stitch_only:
         if False:
@@ -71,12 +71,12 @@ def job_ms(points, do_summary=False, cutplanes=None, stitch_only=False):
         stitch_helm_outer(run, times, point)
 
 
-    if do_summarize:
+    if do_summary:
         stitch_summary(run, times)
 
 def main():
-    job_ie(("colaba","gridpnt1","gridpnt2"))
-    job_ms(("colaba","gridpnt1","gridpnt2"), do_summary=True)
+    #job_ie(("colaba","gridpnt1","gridpnt2"))
+    job_ms(("colaba","gridpnt1","gridpnt2"), do_summary=True, stitch_only=True)
 
 if __name__ == '__main__':
     main()
