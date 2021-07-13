@@ -12,9 +12,9 @@ $ ls
 
 $ cat run.info.py
 {
-  "model"                 : "SWMF"
-  "run_name"              : "DIPTSUR2"
-  "rCurrents"             : 1.8
+  "model"                 : "SWMF",
+  "run_name"              : "DIPTSUR2",
+  "rCurrents"             : 1.8,
  }
 
 $ cat magnetosphere_files.txt

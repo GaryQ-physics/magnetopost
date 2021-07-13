@@ -130,6 +130,8 @@ def stitch_summary(run, times):
             + f'{funcnameStr}.npy'
     arr = np.array(summarys)
     np.save(arr_name, arr)
+    #with open(f'{arr}.head', 'w') as f:
+    #    f.write(varidx)
 
 
 if __name__ == '__main__':
