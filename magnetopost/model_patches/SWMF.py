@@ -4,7 +4,7 @@ from swmf_file_reader.read_ie_files import read_iono_tec
 
 def get_ms_slice_class(filename):
     assert(filename[-4:] == '.out')
-    return bats.return_class(filename[:-4])
+    return bats.get_class_from_native(filename[:-4])
 
 
 def get_iono_slice(filename):

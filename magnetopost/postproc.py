@@ -75,9 +75,10 @@ def job_ms(points, do_summary=False, cutplanes=None, stitch_only=False):
         stitch_summary(run, times)
 
 def main():
-    #job_ie(("colaba","gridpnt1","gridpnt2"))
-    job_ms(("colaba","gridpnt1","gridpnt2"), do_summary=True, stitch_only=True)
+    points = ('YKC','YKC_N','YKC_S','OTT','FRD')
+    job_ie(points)
+    job_ms(points, do_summary=False)
+    print('DONE JOB')
 
 if __name__ == '__main__':
     main()
-    print('DONE')

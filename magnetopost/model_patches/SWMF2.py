@@ -3,7 +3,7 @@ from swmf_file_reader.read_ie_files import read_iono_cdf
 
 def get_ms_slice_class(filename):
     assert(filename[-4:] == '.cdf')
-    return bats.return_class(filename)
+    return bats.get_class_from_cdf(filename)
 
 def get_iono_slice(filename):
     return read_iono_cdf(filename)
