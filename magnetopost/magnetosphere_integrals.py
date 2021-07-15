@@ -3,6 +3,7 @@ from numba import njit
 import datetime
 import pandas as pd
 
+from hxform import hxform as hx
 from magnetopost import util
 from magnetopost.units_and_constants import phys
 
@@ -98,7 +99,9 @@ def slice_bs_msph(run, time, ms_slice, obs_point):
     else:
         x0 = util.GetMagnetometerCoordinates(obs_point, time, 'GSM', 'car')
     integral = _jit_B_biotsavart(ms_slice, x0, run['rCurrents'])
-    
+    integral = hx.GSMtoSM(integral.reshape(1,3), time, ctype_in='car', ctype_out='car').ravel()
+    integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
+
     outname = f'{run["rundir"]}/derived/timeseries/slices/' \
         + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
     np.save(outname, integral)
@@ -111,7 +114,9 @@ def slice_cl_msph(run, time, ms_slice, obs_point):
     else:
         x0 = util.GetMagnetometerCoordinates(obs_point, time, 'GSM', 'car')
     integral = _jit_B_coulomb(ms_slice, x0, run['rCurrents'])
-    
+    integral = hx.GSMtoSM(integral.reshape(1,3), time, ctype_in='car', ctype_out='car').ravel()
+    integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
+
     outname = f'{run["rundir"]}/derived/timeseries/slices/' \
         + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
     np.save(outname, integral)

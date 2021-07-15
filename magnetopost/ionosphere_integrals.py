@@ -1,11 +1,8 @@
 import numpy as np
 from numba import njit
-import pandas as pd
 import datetime
 
-import os
-import sys
-
+from hxform import hxform as hx
 from magnetopost import util
 from magnetopost.units_and_constants import phys
 from magnetopost.gap_integrals import get_dipole_field
@@ -78,6 +75,7 @@ def slice_bs_pedersen(run, time, ie_slice, obs_point):
     scalefact = phys['mu0']*phys['Siemens']*phys['mV']/phys['m']
 
     integral = scalefact*_integral_bs(X,Y,Z,x0,KX,KY,KZ,Measure)
+    integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
 
     outname = f'{run["rundir"]}/derived/timeseries/slices/' \
         + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
@@ -106,6 +104,7 @@ def slice_bs_hall(run, time, ie_slice, obs_point):
     scalefact = phys['mu0']*phys['Siemens']*phys['mV']/phys['m']
 
     integral = scalefact*_integral_bs(XYZ[:,0],XYZ[:,1],XYZ[:,2],x0,K[:,0],K[:,1],K[:,2],Measure)
+    integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
 
     outname = f'{run["rundir"]}/derived/timeseries/slices/' \
         + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'

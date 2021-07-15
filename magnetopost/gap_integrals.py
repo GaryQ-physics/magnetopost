@@ -3,6 +3,7 @@ from numba import njit
 import datetime
 import pandas as pd
 
+from hxform import hxform as hx
 from magnetopost import util
 from magnetopost.units_and_constants import phys
 import magnetopost.tmp_cxtransform as cx
@@ -149,6 +150,8 @@ def slice_bs_fac(run, time, ms_slice, obs_point, nTheta=181,nPhi=180,nR=30, gap_
 
     dB_fac, dB_mhd_SurfaceIntegral = _jit_gap_region_integrals(ms_slice, GM_2_gap, x0, nTheta,nPhi,nR, run['rCurrents'])
     dB_fac = (phys['mu0']*phys['muA']/phys['m']**2) * dB_fac
+    dB_fac = hx.get_NED_vector_components(dB_fac.reshape(1,3), x0.reshape(1,3)).ravel()
+    dB_mhd_SurfaceIntegral = hx.get_NED_vector_components(dB_mhd_SurfaceIntegral.reshape(1,3), x0.reshape(1,3)).ravel()
 
     outname = f'{run["rundir"]}/derived/timeseries/slices/' \
         + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'

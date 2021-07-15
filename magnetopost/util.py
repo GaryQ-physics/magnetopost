@@ -1,6 +1,8 @@
 import os
 import ast
+import numpy as np
 from magnetopost.config import defined_magnetometers
+from hxform import hxform as hx
 
 def Tstr(time, length=6):
     return '%.4d%.2d%.2dT%.2d%.2d%.2d'%(time[:6])
@@ -33,16 +35,19 @@ def prep_run(rundir):
     return run
 
 
-import spacepy.coordinates as sc
-from spacepy.time import Ticktock
 def GetMagnetometerCoordinates(magnetometer, time, csys, ctype):
     if isinstance(magnetometer, str):
         magnetometer = defined_magnetometers[magnetometer]
 
-    cvals = sc.Coords(magnetometer.coords, magnetometer.csys, magnetometer.ctype)
-    t_str = '%04d-%02d-%02dT%02d:%02d:%02d'%(time[:6])
-
-    cvals.ticks = Ticktock(t_str, 'ISO')
-    newcoord = cvals.convert(csys, ctype)
-
-    return newcoord.data[0, :]
+    try:
+        return np.array(hx.transform(magnetometer.coords, time, magnetometer.csys, csys, ctype_in=magnetometer.ctype, ctype_out=ctype)[0])
+    except Exception as e:
+        print(e)
+        print('hxform FAILED')
+        import spacepy.coordinates as sc
+        from spacepy.time import Ticktock
+        cvals = sc.Coords(magnetometer.coords, magnetometer.csys, magnetometer.ctype)
+        t_str = '%04d-%02d-%02dT%02d:%02d:%02d'%(time[:6])
+        cvals.ticks = Ticktock(t_str, 'ISO')
+        newcoord = cvals.convert(csys, ctype)
+        return newcoord.data[0, :]
