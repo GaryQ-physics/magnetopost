@@ -44,6 +44,7 @@ def _jit_stats_summary(ms_slice, rcut):
     varidx['jR_error'] = len(varidx)
     varidx['jR_fractional_error'] = len(varidx)
     nVarTot = len(varidx)
+    #print(varidx)
 
     summary_arr = np.empty((nVarTot,6), dtype=np.float32)
     summary_arr[:,_count] = 0.
@@ -135,6 +136,8 @@ def stitch_summary(run, times):
 
 
 if __name__ == '__main__':
-    from magnetopost.model_patches import SWMF
-    sl = SWMF.get_ms_slice_class('/home/gary/temp/3d__var_3_e20031120-070000-000.out')
-    slice_summary({'rCurrents':1.8}, (2019,9,2,4,11,0), sl)
+    from magnetopost.model_patches import SWMF2
+    #fn = '/home/gary/temp/3d__var_3_e20031120-070000-000.out'
+    fn = '/home/gary/media_sunspot/SWPC_SWMF_052811_2/GM_CDF/3d__var_1_t00001001_n0002710.out.cdf'
+    sl = SWMF2.get_ms_slice_class(fn)
+    slice_summary({'rCurrents':1.}, (2019,9,2,4,11,0), sl)
