@@ -8,7 +8,7 @@ from magnetopost import util
 from magnetopost.units_and_constants import phys
 
 @njit
-def _jit_B_biotsavart(ms_slice, x0, rcut):
+def _jit_B_biotsavart(ms_slice, x0, rcut, include):
     integral = np.zeros((3,),dtype=np.float32)
 
     for ind in range(ms_slice.data_arr.shape[0]):
@@ -19,6 +19,9 @@ def _jit_B_biotsavart(ms_slice, x0, rcut):
 
         distanceSquared = x**2 + y**2 + z**2
         if distanceSquared < rcut**2:
+            continue
+
+        if include is not None and not include[ind]: 
             continue
 
         partials_b1x = ms_slice.get_native_partial_derivatives(ind, 'b1x')
@@ -51,7 +54,7 @@ def _jit_B_biotsavart(ms_slice, x0, rcut):
 
 
 @njit
-def _jit_B_coulomb(ms_slice, x0, rcut):
+def _jit_B_coulomb(ms_slice, x0, rcut, include):
     integral = np.zeros((3,),dtype=np.float32)
 
     for ind in range(ms_slice.data_arr.shape[0]):
@@ -62,6 +65,9 @@ def _jit_B_coulomb(ms_slice, x0, rcut):
 
         distanceSquared = x**2 + y**2 + z**2
         if distanceSquared < rcut**2:
+            continue
+
+        if include is not None and not include[ind]: 
             continue
 
         partials_b1x = ms_slice.get_native_partial_derivatives(ind, 'b1x')
@@ -94,31 +100,37 @@ def _jit_B_coulomb(ms_slice, x0, rcut):
 def slice_bs_msph(run, time, ms_slice, obs_point):
     funcnameStr = 'bs_msph'
 
-    if obs_point == "origin":
-        x0 = np.zeros(3)
-    else:
-        x0 = util.GetMagnetometerCoordinates(obs_point, time, 'GSM', 'car')
-    integral = _jit_B_biotsavart(ms_slice, x0, run['rCurrents'])
+    x0 = util.GetMagnetometerCoordinates(obs_point, time, 'GSM', 'car')
+
+    #includeStr = '_x_gt_0'
+    #include = ms_slice.data_arr[:, ms_slice.varidx['x']] > 0.
+    includeStr = ''
+    include = None
+
+    integral = _jit_B_biotsavart(ms_slice, x0, run['rCurrents'], include)
     integral = hx.GSMtoSM(integral.reshape(1,3), time, ctype_in='car', ctype_out='car').ravel()
     integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
 
     outname = f'{run["rundir"]}/derived/timeseries/slices/' \
-        + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
+        + f'{funcnameStr}{includeStr}-{obs_point}-{util.Tstr(time)}.npy'
     np.save(outname, integral)
 
 def slice_cl_msph(run, time, ms_slice, obs_point):
     funcnameStr = 'cl_msph'
 
-    if obs_point == "origin":
-        x0 = np.zeros(3)
-    else:
-        x0 = util.GetMagnetometerCoordinates(obs_point, time, 'GSM', 'car')
-    integral = _jit_B_coulomb(ms_slice, x0, run['rCurrents'])
+    x0 = util.GetMagnetometerCoordinates(obs_point, time, 'GSM', 'car')
+
+    #includeStr = '_x_gt_0'
+    #include = ms_slice.data_arr[:, ms_slice.varidx['x']] > 0.
+    includeStr = ''
+    include = None
+
+    integral = _jit_B_coulomb(ms_slice, x0, run['rCurrents'], include)
     integral = hx.GSMtoSM(integral.reshape(1,3), time, ctype_in='car', ctype_out='car').ravel()
     integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
 
     outname = f'{run["rundir"]}/derived/timeseries/slices/' \
-        + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
+        + f'{funcnameStr}{includeStr}-{obs_point}-{util.Tstr(time)}.npy'
     np.save(outname, integral)
 
 
