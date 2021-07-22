@@ -53,10 +53,7 @@ def _integral_bs(X, Y, Z, x0, JX, JY, JZ, Measure):
 def slice_bs_pedersen(run, time, ie_slice, obs_point):
     funcnameStr = 'bs_pedersen'
 
-    if obs_point == "origin":
-        x0 = np.zeros(3)
-    else:
-        x0 = util.GetMagnetometerCoordinates(obs_point, time, 'SM', 'car')
+    x0 = util.GetMagnetometerCoordinates(obs_point, time, 'SM', 'car')
 
     data_arr, varidx, units = ie_slice
 
@@ -85,10 +82,7 @@ def slice_bs_pedersen(run, time, ie_slice, obs_point):
 def slice_bs_hall(run, time, ie_slice, obs_point):
     funcnameStr = 'bs_hall'
 
-    if obs_point == "origin":
-        x0 = np.zeros(3)
-    else:
-        x0 = util.GetMagnetometerCoordinates(obs_point, time, 'SM', 'car')
+    x0 = util.GetMagnetometerCoordinates(obs_point, time, 'SM', 'car')
 
     data_arr, varidx, units = ie_slice
 

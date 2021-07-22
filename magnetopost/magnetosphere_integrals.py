@@ -108,7 +108,8 @@ def slice_bs_msph(run, time, ms_slice, obs_point):
     include = None
 
     integral = _jit_B_biotsavart(ms_slice, x0, run['rCurrents'], include)
-    integral = hx.GSMtoSM(integral.reshape(1,3), time, ctype_in='car', ctype_out='car').ravel()
+    integral = hx.GSMtoSM(integral, time, ctype_in='car', ctype_out='car')
+    x0 = hx.GSMtoSM(x0, time, ctype_in='car', ctype_out='car')
     integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
 
     outname = f'{run["rundir"]}/derived/timeseries/slices/' \
@@ -126,7 +127,8 @@ def slice_cl_msph(run, time, ms_slice, obs_point):
     include = None
 
     integral = _jit_B_coulomb(ms_slice, x0, run['rCurrents'], include)
-    integral = hx.GSMtoSM(integral.reshape(1,3), time, ctype_in='car', ctype_out='car').ravel()
+    integral = hx.GSMtoSM(integral, time, ctype_in='car', ctype_out='car')
+    x0 = hx.GSMtoSM(x0, time, ctype_in='car', ctype_out='car')
     integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
 
     outname = f'{run["rundir"]}/derived/timeseries/slices/' \

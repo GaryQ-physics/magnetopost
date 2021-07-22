@@ -2,6 +2,7 @@ import numpy as np
 from numba import njit
 import datetime
 
+from hxform import hxform as hx
 from magnetopost import util
 from magnetopost.units_and_constants import phys
 
@@ -74,12 +75,12 @@ def _jit_helm_outer(ms_slice, x0):
 def slice_helm_outer(run, time, ms_slice, obs_point):
     funcnameStr = 'helm_outer'
 
-    if obs_point == "origin":
-        x0 = np.zeros(3)
-    else:
-        x0 = util.GetMagnetometerCoordinates(obs_point, time, 'GSM', 'car')
+    x0 = util.GetMagnetometerCoordinates(obs_point, time, 'GSM', 'car')
 
     integral = _jit_helm_outer(ms_slice, x0)
+    integral = hx.GSMtoSM(integral, time, ctype_in='car', ctype_out='car')
+    x0 = hx.GSMtoSM(x0, time, ctype_in='car', ctype_out='car')
+    integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
 
     outname = f'{run["rundir"]}/derived/timeseries/slices/' \
         + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'

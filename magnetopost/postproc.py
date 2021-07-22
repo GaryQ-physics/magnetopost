@@ -5,6 +5,7 @@ from magnetopost.gap_integrals import slice_bs_fac, stitch_bs_fac
 from magnetopost.ionosphere_integrals import slice_bs_pedersen, stitch_bs_pedersen, slice_bs_hall, stitch_bs_hall
 from magnetopost.magnetosphere_integrals import slice_bs_msph, stitch_bs_msph, slice_cl_msph, stitch_cl_msph
 from magnetopost.boundary_integrals import slice_helm_outer, stitch_helm_outer
+from magnetopost.probe import slice_probe, stitch_probe
 
 def job_ie(points, stitch_only=False):
     run = util.prep_run(f'{os.path.abspath(".")}/') #returns dictionary
@@ -47,6 +48,9 @@ def job_ms(points, do_summary=False, cutplanes=None, stitch_only=False):
             slice_bs_msph(run,time, ms_slice, point)
             slice_cl_msph(run,time, ms_slice, point)
             slice_helm_outer(run, time, ms_slice, point)
+            slice_helm_rCurrents(run,time, ms_slice, point)
+            slice_helm_rCurrents(run,time, ms_slice, point, gap_csys='GSM')
+            slice_probe(run, time, ms_slice, point)
 
         if do_summary:
             slice_summary(run, time, ms_slice)
@@ -60,7 +64,7 @@ def job_ms(points, do_summary=False, cutplanes=None, stitch_only=False):
             import multiprocessing
             num_cores = multiprocessing.cpu_count()
             num_cores = min(num_cores, len(times), 20)
-            print(f'Parallel processing {len(times)} ionosphere slices using {num_cores} cores')
+            print(f'Parallel processing {len(times)} magnetosphere slices using {num_cores} cores')
             Parallel(n_jobs=num_cores)(\
                       delayed(wrap)(time) for time in times)
 
@@ -69,13 +73,17 @@ def job_ms(points, do_summary=False, cutplanes=None, stitch_only=False):
         stitch_bs_msph(run, times, point)
         stitch_cl_msph(run, times, point)
         stitch_helm_outer(run, times, point)
+        stitch_helm_rCurrents(run, times, point)
+        stitch_helm_rCurrents(run, times, point, gap_csys='GSM')
+        stitch_probe(run, times, point)
 
 
     if do_summary:
         stitch_summary(run, times)
 
 def main():
-    points = ('YKC','YKC_N','YKC_S','OTT','FRD')
+    #points = ('YKC','YKC_N','YKC_S','OTT','FRD')
+    points = ('GMpoint1','GMpoint2','GMpoint3', 'colaba') 
     job_ie(points)
     job_ms(points, do_summary=False)
     print('DONE JOB')

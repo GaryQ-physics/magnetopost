@@ -35,15 +35,13 @@ def prep_run(rundir):
     return run
 
 
-def GetMagnetometerCoordinates(magnetometer, time, csys, ctype, hxway=False):
+def GetMagnetometerCoordinates(magnetometer, time, csys, ctype, hxway=True):
     if isinstance(magnetometer, str):
         magnetometer = defined_magnetometers[magnetometer]
 
     if hxway:
-        return np.array(hx.transform(magnetometer.coords, time, magnetometer.csys, csys, ctype_in=magnetometer.ctype, ctype_out=ctype)[0])
+        return hx.transform(np.array(magnetometer.coords), time, magnetometer.csys, csys, ctype_in=magnetometer.ctype, ctype_out=ctype)
     else: 
-        #print(e)
-        #print('hxform FAILED')
         import spacepy.coordinates as sc
         from spacepy.time import Ticktock
         cvals = sc.Coords(magnetometer.coords, magnetometer.csys, magnetometer.ctype)

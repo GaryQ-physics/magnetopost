@@ -6,7 +6,6 @@ import pandas as pd
 from hxform import hxform as hx
 from magnetopost import util
 from magnetopost.units_and_constants import phys
-import magnetopost.tmp_cxtransform as cx
 
 @njit
 def matvectprod(A, v):
@@ -59,13 +58,57 @@ def get_dipole_field(xyz):
     b[2]    = (Term1*xyz[2]-DipoleStrength)/r**3
     return b
 
+
 @njit
-def _jit_gap_region_integrals(ms_slice, GM_2_gap, x0, nTheta,nPhi,nR, rCurrents):
-    # x0 and returned dB_fac, dB_mhd_SurfaceIntegral are in cartesian gap_csys coordinates (default SMG)
+def _jit_mhd_SurfaceIntegral(ms_slice, GM_2_gap, x0, nTheta,nPhi, rCurrents):
+    # x0 and returned dB_mhd_SurfaceIntegral are in cartesian gap_csys coordinates (default SMG)
+    dB_mhd_SurfaceIntegral = np.zeros(3)
+
+    dTheta = np.pi    / (nTheta-1)
+    dPhi   = 2.*np.pi / nPhi
+
+    for iTheta in range(nTheta):
+        Theta = iTheta * dTheta
+        # the area of the triangle formed by pole and the latitude segment at Theta=dTheta/2
+        # is approximately dTheta/4*dTheta/2, so sin(theta) replaced with dTheta/8.
+        SinTheta = max(np.sin(Theta), dTheta/8.)
+        dSurface = rCurrents**2*SinTheta*dTheta*dPhi
+
+        for iPhi in range(nPhi):
+            Phi = iPhi * dPhi
+
+            xyz_Currents = sph_to_xyz(rCurrents, Theta, Phi)
+
+            b_Currents = np.empty(3,dtype='f8'); j_Currents = np.empty(3,dtype='f8')
+            xyz_inGM = matvectprod(GM_2_gap.transpose(), xyz_Currents)
+            # use GM interpolator, which is in GM_csys coordinates, to get b1 and convert to gap_csys coordinates
+            b1_Currents[0] = ms_slice.interpolate(xyz_inGM, 'b1x')
+            b1_Currents[1] = ms_slice.interpolate(xyz_inGM, 'b1y')
+            b1_Currents[2] = ms_slice.interpolate(xyz_inGM, 'b1z')
+            b1_Currents[:] = matvectprod(GM_2_gap, b1_Currents)#?? doesnt seem to work without [:] for some reason
+
+            Unit_xyz_Currents = xyz_Currents / rCurrents
+            InvDist2_D = dSurface*(xyz_Currents - x0)/(4*np.pi*np.sqrt(np.sum((xyz_Currents - x0)**2))**3)
+
+            B1r   = np.dot(Unit_xyz_Currents, b1_Currents)
+            B1t = np.cross(Unit_xyz_Currents, b1_Currents)
+            dB_mhd_SurfaceIntegral[:] = dB_mhd_SurfaceIntegral[:] + B1r*InvDist2_D + np.cross(B1t, InvDist2_D)
+
+            #Br == n.b
+            #Bt == n&b
+            #InvDist2_D == (dA/4pi) * (x - x0)/(|x - x0|**3)
+            #dB == (dA/4pi)*[ Br*((x - x0)/(|x - x0|**3)) + Bt&((x - x0)/(|x - x0|**3)) ]
+            #   == (dA/4pi)*[ (n.b)*(x - x0) + (n&b)&(x - x0) ]/(|x - x0|**3)
+
+    return dB_mhd_SurfaceIntegral
+
+
+@njit
+def _jit_fac_integral(ms_slice, GM_2_gap, x0, nTheta,nPhi,nR, rCurrents):
+    # x0 and returned dB_fac are in cartesian gap_csys coordinates (default SMG)
     rIonosphere = 1.01725 # rEarth + iono_height #!!! hard coded
 
     dB_fac                 = np.zeros(3)
-    dB_mhd_SurfaceIntegral = np.zeros(3)
 
     dTheta = np.pi    / (nTheta-1)
     dPhi   = 2.*np.pi / nPhi
@@ -82,7 +125,6 @@ def _jit_gap_region_integrals(ms_slice, GM_2_gap, x0, nTheta,nPhi,nR, rCurrents)
             Phi = iPhi * dPhi
 
             xyz_Currents = sph_to_xyz(rCurrents, Theta, Phi)
-            b0_Currents = get_dipole_field(xyz_Currents)
 
             b_Currents = np.empty(3,dtype='f8'); j_Currents = np.empty(3,dtype='f8')
             xyz_inGM = matvectprod(GM_2_gap.transpose(), xyz_Currents)
@@ -100,13 +142,6 @@ def _jit_gap_region_integrals(ms_slice, GM_2_gap, x0, nTheta,nPhi,nR, rCurrents)
             Unit_b_Currents = b_Currents / np.linalg.norm(b_Currents)
             _Fac_rCurrents = np.dot(Unit_b_Currents,j_Currents)#!!!!!!!!!!!
             Fac_term = _Fac_rCurrents * np.dot(Unit_b_Currents, Unit_xyz_Currents)
-
-            #####################
-            Br   = np.dot(Unit_xyz_Currents, b_Currents)
-            Bt = np.cross(Unit_xyz_Currents, b_Currents)
-            InvDist2_D = dSurface*(xyz_Currents - x0)/(4*np.pi*np.sqrt(np.sum((xyz_Currents - x0)**2))**3)
-            dB_mhd_SurfaceIntegral[:] = dB_mhd_SurfaceIntegral[:] + Br*InvDist2_D + np.cross(Bt, InvDist2_D)
-            #####################
 
             for k in range(nR):
                 R = rCurrents - dR*(k+0.5)
@@ -129,38 +164,47 @@ def _jit_gap_region_integrals(ms_slice, GM_2_gap, x0, nTheta,nPhi,nR, rCurrents)
                 dB_fac[:] = dB_fac[:] + dVol_FACcoords* \
                   np.cross(J_fac, x0-xyz_Map)/(4*np.pi*(np.linalg.norm(xyz_Map-x0))**3)
 
-    return dB_fac, dB_mhd_SurfaceIntegral
+    return dB_fac
+
 
 def slice_bs_fac(run, time, ms_slice, obs_point, nTheta=181,nPhi=180,nR=30, gap_csys='SM'):
     funcnameStr = 'bs_fac'
 
-    if obs_point == "origin":
-        x0 = np.zeros(3)
-    else:
-        x0 = util.GetMagnetometerCoordinates(obs_point, time, 'SM', 'car')
+    assert(gap_csys=='SM')
+    x0 = util.GetMagnetometerCoordinates(obs_point, time, 'SM', 'car') #!!!! gap_csys?
 
     GM_csys = 'GSM'
-    assert(gap_csys=='SM')
 
-    GM_2_gap = np.empty((3,3))
-    _ = cx.transform([1.,0.,0.], (2019,9,2,6,30,0), 'GSM', 'MAG')#!!!!!!!! DOESNT WORK UNLESS UNCOMMENTED
-    GM_2_gap[:, 0] = cx.transform([1.,0.,0.], time, GM_csys, gap_csys)
-    GM_2_gap[:, 1] = cx.transform([0.,1.,0.], time, GM_csys, gap_csys)
-    GM_2_gap[:, 2] = cx.transform([0.,0.,1.], time, GM_csys, gap_csys)
+    GM_2_gap = hx.get_transform_matrix(time, GM_csys, gap_csys)
 
-    dB_fac, dB_mhd_SurfaceIntegral = _jit_gap_region_integrals(ms_slice, GM_2_gap, x0, nTheta,nPhi,nR, run['rCurrents'])
+    dB_fac = _jit_fac_integral(ms_slice, GM_2_gap, x0, nTheta,nPhi,nR, run['rCurrents'])
     dB_fac = (phys['mu0']*phys['muA']/phys['m']**2) * dB_fac
     dB_fac = hx.get_NED_vector_components(dB_fac.reshape(1,3), x0.reshape(1,3)).ravel()
-    dB_mhd_SurfaceIntegral = hx.get_NED_vector_components(dB_mhd_SurfaceIntegral.reshape(1,3), x0.reshape(1,3)).ravel()
 
     outname = f'{run["rundir"]}/derived/timeseries/slices/' \
         + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
 
-    outname_SURF = f'{run["rundir"]}/derived/timeseries/slices/' \
-        + f'helm_rCurrent-{obs_point}-{util.Tstr(time)}.npy'
-
     np.save(outname, dB_fac)
-    np.save(outname_SURF, dB_mhd_SurfaceIntegral)
+
+
+def slice_helm_rCurrents(run, time, ms_slice, obs_point, nTheta=181,nPhi=180, gap_csys='SM'):
+    funcnameStr = 'helm_rCurrents'
+
+    x0 = util.GetMagnetometerCoordinates(obs_point, time, gap_csys, 'car')
+
+    GM_csys = 'GSM'
+
+    GM_2_gap = hx.get_transform_matrix(time, GM_csys, gap_csys)
+
+    dB_mhd_SurfaceIntegral = _jit_mhd_SurfaceIntegral(ms_slice, GM_2_gap, x0, nTheta,nPhi, run['rCurrents'])
+    dB_mhd_SurfaceIntegral = hx.transform(dB_mhd_SurfaceIntegral, time, gap_csys, 'SM')
+    x0 = hx.transform(x0, time, gap_csys, 'SM')
+    dB_mhd_SurfaceIntegral = hx.get_NED_vector_components(dB_mhd_SurfaceIntegral.reshape(1,3), x0.reshape(1,3)).ravel()
+
+    outname = f'{run["rundir"]}/derived/timeseries/slices/' \
+        + f'{funcnameStr}_gap{gap_csys}-{obs_point}-{util.Tstr(time)}.npy'
+
+    np.save(outname, dB_mhd_SurfaceIntegral)
 
 
 def stitch_bs_fac(run, times, obs_point):
@@ -178,16 +222,22 @@ def stitch_bs_fac(run, times, obs_point):
     arr = np.array(integrals)
     np.save(arr_name, arr)
 
-    integrals_SURF = []
-    for time in times:
-        outname_SURF = f'{run["rundir"]}/derived/timeseries/slices/' \
-            + f'helm_rCurrent-{obs_point}-{util.Tstr(time)}.npy'
-        integrals_SURF.append(np.load(outname_SURF))
 
-    arr_name_SURF = f'{run["rundir"]}/derived/timeseries/' \
-            + f'helm_rCurrent-{obs_point}.npy'
-    arr_SURF = np.array(integrals_SURF)
-    np.save(arr_name_SURF, arr_SURF)
+def stitch_helm_rCurrents(run, times, obs_point, gap_csys='SM'):
+    funcnameStr = 'helm_rCurrents'
+
+    integrals = []
+    for time in times:
+        outname = f'{run["rundir"]}/derived/timeseries/slices/' \
+            + f'{funcnameStr}_gap{gap_csys}-{obs_point}-{util.Tstr(time)}.npy'
+
+        integrals.append(np.load(outname))
+
+    arr_name = f'{run["rundir"]}/derived/timeseries/' \
+            + f'{funcnameStr}_gap{gap_csys}-{obs_point}.npy'
+    arr = np.array(integrals)
+    np.save(arr_name, arr)
+
 
 if __name__ == '__main__':
     from magnetopost.model_patches import SWMF
