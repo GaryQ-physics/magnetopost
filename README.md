@@ -42,4 +42,5 @@ $ cat ionosphere_files.txt
 
 $ python -c 'from magnetopost import postproc; postproc.job(("colaba", "GMpoint1"), do_summary=True)'
 $ python -c 'from magnetopost import postproc; postproc.job_iono(("colaba",))'
+$ python -c 'from magnetopost import postproc; postproc.all(("colaba", "GMpoint1","GMpoint6"))'
 ```

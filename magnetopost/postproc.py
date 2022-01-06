@@ -1,7 +1,7 @@
 import os
 from magnetopost import util, models
 from magnetopost.summarize import slice_summary, stitch_summary
-from magnetopost.gap_integrals import slice_bs_fac, stitch_bs_fac
+from magnetopost.gap_integrals import slice_bs_fac, stitch_bs_fac, slice_helm_rCurrents, stitch_helm_rCurrents
 from magnetopost.ionosphere_integrals import slice_bs_pedersen, stitch_bs_pedersen, slice_bs_hall, stitch_bs_hall
 from magnetopost.magnetosphere_integrals import slice_bs_msph, stitch_bs_msph, slice_cl_msph, stitch_cl_msph
 from magnetopost.boundary_integrals import slice_helm_outer, stitch_helm_outer
@@ -81,12 +81,9 @@ def job_ms(points, do_summary=False, cutplanes=None, stitch_only=False):
     if do_summary:
         stitch_summary(run, times)
 
-def main():
-    #points = ('YKC','YKC_N','YKC_S','OTT','FRD')
-    points = ('GMpoint1','GMpoint2','GMpoint3', 'colaba') 
+def job(points):
+    #points = ("YKC","YKC_N","YKC_S","OTT","FRD")
+    #points = ("GMpoint4","GMpoint5") 
     job_ie(points)
     job_ms(points, do_summary=False)
     print('DONE JOB')
-
-if __name__ == '__main__':
-    main()

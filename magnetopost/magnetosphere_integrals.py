@@ -97,15 +97,21 @@ def _jit_B_coulomb(ms_slice, x0, rcut, include):
     return ( 1./(4*np.pi) )* integral
 
 
-def slice_bs_msph(run, time, ms_slice, obs_point):
+def slice_bs_msph(run, time, ms_slice, obs_point, insubset=None, subsetStr=None):
+    '''
+    insubset is None (default) or a python function which acts on (N,3) float arrays returning (N,) boolean arrays
+    '''
     funcnameStr = 'bs_msph'
 
     x0 = util.GetMagnetometerCoordinates(obs_point, time, 'GSM', 'car')
 
-    #includeStr = '_x_gt_0'
-    #include = ms_slice.data_arr[:, ms_slice.varidx['x']] > 0.
-    includeStr = ''
-    include = None
+    if insubset is None:
+        include = None
+        subsetStr = ''
+    else:
+        include = insubset(ms_slice.data_arr[:, [ms_slice.varidx['x'],ms_slice.varidx['y'],ms_slice.varidx['z']]])
+        if subsetStr is None:
+            subsetStr = ''
 
     integral = _jit_B_biotsavart(ms_slice, x0, run['rCurrents'], include)
     integral = hx.GSMtoSM(integral, time, ctype_in='car', ctype_out='car')
@@ -113,7 +119,7 @@ def slice_bs_msph(run, time, ms_slice, obs_point):
     integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
 
     outname = f'{run["rundir"]}/derived/timeseries/slices/' \
-        + f'{funcnameStr}{includeStr}-{obs_point}-{util.Tstr(time)}.npy'
+        + f'{funcnameStr}{subsetStr}-{obs_point}-{util.Tstr(time)}.npy'
     np.save(outname, integral)
 
 def slice_cl_msph(run, time, ms_slice, obs_point):

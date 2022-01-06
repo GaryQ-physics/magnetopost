@@ -79,7 +79,7 @@ def _jit_mhd_SurfaceIntegral(ms_slice, GM_2_gap, x0, nTheta,nPhi, rCurrents):
 
             xyz_Currents = sph_to_xyz(rCurrents, Theta, Phi)
 
-            b_Currents = np.empty(3,dtype='f8'); j_Currents = np.empty(3,dtype='f8')
+            b1_Currents = np.empty(3,dtype='f8')
             xyz_inGM = matvectprod(GM_2_gap.transpose(), xyz_Currents)
             # use GM interpolator, which is in GM_csys coordinates, to get b1 and convert to gap_csys coordinates
             b1_Currents[0] = ms_slice.interpolate(xyz_inGM, 'b1x')
