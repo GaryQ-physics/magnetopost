@@ -1,10 +1,10 @@
 from setuptools import setup, find_packages
 
-install_requires = ["numpy","pandas"]
+install_requires = ["numpy","numba"]
 
 setup(
     name='magnetopost',
-    version='0.0.0.1',
+    version='0.0.1',
     author='Gary Quaresima',
     author_email='garyquaresima@gmail.com',
     packages=find_packages(),
