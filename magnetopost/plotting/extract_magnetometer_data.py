@@ -4,11 +4,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 import pandas as pd
+from adjustText import adjust_text
 
+from datetick import datetick
 import magnetopost.util as mputil
 
 OVERWRITE_CACHE=False
 ned = ('north','east','down')
+
+def gen_rmse(diff):
+    return np.sqrt( np.sum(diff**2)/diff.size ) #!!! NANS
 
 def extract_from_swmf_magnetometer_files(rundir, surface_location):
     """
@@ -178,9 +183,8 @@ def extract_all():
     B_mag, B_fac, B_ionoSigH, B_ionoSigP = extract_from_CalcDeltaB_file('pointdata_751815008468.txt')
     bs_msph, bs_fac, bs_hall, bs_pedersen = extract_from_magnetopost_files(rundir, surface_location)
 
-def colaba():
-    rundir = '/home/gary/media_sunspot/DIPTSUR2/'
-    surface_location = 'colaba'
+def surface_point(run, surface_location):
+    rundir = f'/home/gary/media_sunspot/{run}/'
 
     dBMhd, dBFac, dBHal, dBPed = extract_from_swmf_magnetometer_files(rundir, surface_location)
     #B_mag, B_fac, B_ionoSigH, B_ionoSigP = extract_from_CalcDeltaB_file('pointdata_751815008468.txt')
@@ -197,21 +201,22 @@ def colaba():
         norm(ours).plot(ax=axs[i,0],
                                                 label='our reproduction',  color='Blue')
         diff = norm(ours) - norm(swmf)
-        diff.plot(ax=axs[i,1], label='difference')
-        rmse = np.sqrt( np.sum(diff**2)/diff.size ) #!!! NANS
-        print(rmse)
+        rmse = gen_rmse(diff)
+        diff.plot(ax=axs[i,1], label=f'difference (RMSE={rmse:.1f})')
 
         axs[i,0].set_title(title)
         axs[i,0].legend(title_fontsize=1)
         axs[i,1].legend(title_fontsize=1)
+        axs[i,0].set_ylabel('nT')
 
     foo(0, dBMhd, bs_msph    , 'dBMhd')
     foo(1, dBFac, bs_fac     , 'dBFac')
     foo(2, dBHal, bs_hall    , 'dBHal')
     foo(3, dBPed, bs_pedersen, 'dBPed')
-    fig.suptitle('DIPTSUR2')
-    fig.savefig(f'DIPTSUR2-reproduceswmf.pdf')
-    fig.savefig(f'DIPTSUR2-reproduceswmf.dupl.png')
+    fig.suptitle(run)
+    datetick('x')
+    fig.savefig(f'{run}-reproduceswmf.pdf')
+    fig.savefig(f'{run}-reproduceswmf.dupl.png')
     fig.clf(); del fig
 
     fig, axs = plt.subplots(nrows=5, ncols=1, sharex=True, figsize=(12,12), dpi=100)
@@ -224,29 +229,38 @@ def colaba():
                                 label='Method 1.',  color='Blue')
     norm(method_2).plot(ax=axs[0],
                                 label='Method 2.',  color='Orange')
-    (norm(method_1)-norm(method_2)).plot(ax=axs[1],
-                                label='(Method 1.) - (Method 3.)')
+
+    diff = norm(method_1)-norm(method_2)
+    rmse = gen_rmse(diff)
+    diff.plot(ax=axs[1],
+                                label=f'(Method 1.) - (Method 2.) (RMSE={rmse:.1f})')
+
     norm(method_1).plot(ax=axs[2],
                                 label='Method 1.',  color='Blue')
     norm(method_3).plot(ax=axs[2],
                                 label='Method 3.',  color='Orange')
-    (norm(method_1)-norm(method_3)).plot(ax=axs[3],
-                                label='(Method 1.) - (Method 3.)')
+
+    diff = norm(method_1)-norm(method_3)
+    rmse = gen_rmse(diff)
+    diff.plot(ax=axs[3],
+                                label=f'(Method 1.) - (Method 3.) (RMSE={rmse:.1f})')
+
     norm(cl_msph).plot(ax=axs[4],
-                                label='cl_msph',  color='Orange')
+                                label=r'$\int_{\mathcal{M}}$Coulomb',  color='Orange')
     norm(helm_outer).plot(ax=axs[4],
-                                label='helm_outer',  color='Green')
+                                label=r'$\oint_{\mathcal{O}}$',  color='Green')
     norm(bs_msph).plot(ax=axs[4],
-                                label='bs_msph',  color='Blue')
+                                label=r'$\int_{\mathcal{M}}$Biot_Savart',  color='Blue')
 
     [ax.legend() for ax in axs]
-    fig.suptitle('DIPTSUR2')
-    fig.savefig(f'DIPTSUR2-compare123.pdf')
-    fig.savefig(f'DIPTSUR2-compare123.dupl.png')
+    [ax.set_ylabel('nT') for ax in axs]
+    fig.suptitle(run)
+    datetick('x')
+    fig.savefig(f'{run}-compare123.pdf')
+    fig.savefig(f'{run}-compare123.dupl.png')
 
-def GMpoint1():
-    rundir = '/home/gary/media_sunspot/DIPTSUR2/'
-    surface_location = 'GMpoint1'
+def msph_point(run, surface_location):
+    rundir = f'/home/gary/media_sunspot/{run}/'
 
     dBMhd, dBFac, dBHal, dBPed = extract_from_swmf_magnetometer_files(rundir, surface_location)
     bs_msph, bs_fac, bs_hall, bs_pedersen,  cl_msph,helm_outer,helm_rCurrents_gapSM,probe = extract_from_magnetopost_files(rundir, surface_location)
@@ -263,24 +277,35 @@ def GMpoint1():
     norm(method_A).plot(ax=axs[0],
                                 label='Method A.',  color='Blue')
     norm(probe).plot(ax=axs[0],
-                                label='probe',  color='Orange')
-    (norm(method_A)-norm(probe)).plot(ax=axs[1],
-                                label='(Method A.) - (probe)')
+                                label=r'$\mathbf{B}$',  color='Orange')
+
+    diff = norm(method_A)-norm(probe)
+    rmse = gen_rmse(diff)
+    diff.plot(ax=axs[1],
+                                label=r'(Method A.) - $\mathbf{B}$'+f' (RMSE={rmse:.1f})')
+
     norm(method_B).plot(ax=axs[2],
                                 label='Method B.',  color='Blue')
     norm(probe).plot(ax=axs[2],
-                                label='probe',  color='Orange')
-    (norm(method_B)-norm(probe)).plot(ax=axs[3],
-                                label='(Method B.) - (probe)')
+                                label=r'$\mathbf{B}$',  color='Orange')
+
+    diff = norm(method_B)-norm(probe)
+    rmse = gen_rmse(diff)
+    diff.plot(ax=axs[3],
+                                label=r'(Method B.) - $\mathbf{B}$'+f' (RMSE={rmse:.1f})')
 
     [ax.legend() for ax in axs]
-    fig.suptitle('DIPTSUR2')
-    fig.savefig(f'DIPTSUR2-compareAB.pdf')
-    fig.savefig(f'DIPTSUR2-compareAB.dupl.png')
+    [ax.set_ylabel('nT') for ax in axs]
+    fig.suptitle(run)
+    datetick('x')
+    fig.savefig(f'{run}-compareAB.pdf')
+    fig.savefig(f'{run}-compareAB.dupl.png')
 
 def main():
-    colaba()
-    GMpoint1()
+    #surface_point('DIPTSUR2','colaba')
+    #msph_point('DIPTSUR2','GMpoint1')
+    surface_point('SWPC_SWMF_052811_2','colaba')
+    msph_point('SWPC_SWMF_052811_2','GMpoint1')
 
 if __name__ == '__main__':
     if '-O' in sys.argv:
