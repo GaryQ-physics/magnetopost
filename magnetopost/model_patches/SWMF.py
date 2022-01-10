@@ -19,7 +19,7 @@ def generate_filelist_txts():
     import re
 
     magnetosphere_outs = sorted(os.listdir('./GM/IO2'))
-    with open('/tmp/magnetosphere_files.txt','w') as fl:
+    with open('derived/magnetosphere_files.txt','w') as fl:
         regex = r"3d__var_.*\.out$"
 
         for fname in magnetosphere_outs:
@@ -43,7 +43,7 @@ def generate_filelist_txts():
 
 
     ionosphere_outs = sorted(os.listdir('./IE/ionosphere'))
-    with open('/tmp/ionosphere_files.txt','w') as fl:
+    with open('derived/ionosphere_files.txt','w') as fl:
         regex = r"i_.*\.tec$"
 
         for fname in ionosphere_outs:
