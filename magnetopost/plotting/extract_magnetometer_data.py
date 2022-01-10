@@ -12,7 +12,14 @@ def datetick(arg):
     pass
 
 OVERWRITE_CACHE=False
+rootdir = '/home/gary/media_sunspot'
 ned = ('north','east','down')
+
+if '-O' in sys.argv:
+    OVERWRITE_CACHE=True
+for arg in sys.argv:
+    if '--rootdir=' == arg[:len('--rootdir=')]:
+        rootdir = arg[len('--rootdir='):]
 
 def norm(df):
     return np.sqrt(df['north']**2+df['east']**2+df['down']**2)
@@ -218,7 +225,7 @@ def extract_from_magnetopost_files(rundir, surface_location):
 
 
 def extract_all():
-    rundir = '/home/gary/media_sunspot/DIPTSUR2/'
+    rundir = '{rootdir}/DIPTSUR2/'
     surface_location = 'colaba'
 
     dBMhd, dBFac, dBHal, dBPed = extract_from_swmf_magnetometer_files(rundir, surface_location)
@@ -226,7 +233,7 @@ def extract_all():
     bs_msph, bs_fac, bs_hall, bs_pedersen = extract_from_magnetopost_files(rundir, surface_location)
 
 def surface_point(runname, surface_location):
-    rundir = f'/home/gary/media_sunspot/{runname}/'
+    rundir = f'{rootdir}/{runname}/'
 
     try:
         dBMhd, dBFac, dBHal, dBPed = extract_from_swmf_ccmc_printout_file(rundir, surface_location)
@@ -309,8 +316,7 @@ def surface_point(runname, surface_location):
     fig.savefig(f'{runname}-compare123.dupl.png')
 
 def msph_point(runname, surface_location):
-    rundir = f'/home/gary/media_sunspot/{runname}/'
-
+    rundir = f'{rootdir}/{runname}/'
     bs_msph, bs_fac, bs_hall, bs_pedersen,  cl_msph,helm_outer,helm_rCurrents_gapSM,probe = extract_from_magnetopost_files(rundir, surface_location)
 
     B_G  = bs_fac + bs_hall + bs_pedersen
@@ -355,7 +361,6 @@ def main():
     surface_point('SWPC_SWMF_052811_2','YKC')
     msph_point('SWPC_SWMF_052811_2','GMpoint6')
 
+
 if __name__ == '__main__':
-    if '-O' in sys.argv:
-        OVERWRITE_CACHE=True
     main()
