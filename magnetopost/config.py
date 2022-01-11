@@ -22,7 +22,10 @@ defined_magnetometers = {
     'GMpoint4' : Magnetometer(name='GMpoint4',csys='GSM',ctype='car',coords=(0.71875,0.09375,-2.21875) ),
     'GMpoint5' : Magnetometer(name='GMpoint5',csys='GSM',ctype='car',coords=(0.71875,0.09375,-1.71875) ),
     'GMpoint6' : Magnetometer(name='GMpoint6',csys='GSM',ctype='car',coords=(0.,0.,-10.) ),
-    'GMpoint7' : Magnetometer(name='GMpoint6',csys='GSM',ctype='car',coords=(6.,0.,0.) ),
+    'GMpoint7' : Magnetometer(name='GMpoint7',csys='GSM',ctype='car',coords=(0.,0.,-6.) ),
+    'GMpoint8' : Magnetometer(name='GMpoint8',csys='GSM',ctype='car',coords=(0.,0.,-5.) ),
+    'GMpoint9' : Magnetometer(name='GMpoint9',csys='GSM',ctype='car',coords=(6.,0.,0.) ),
+    'GMpoint10' : Magnetometer(name='GMpoint10',csys='GSM',ctype='car',coords=(4.,0.,-4.) ),
 
     'zerolat' : Magnetometer(name='zerolat',csys='SM',ctype='sph',coords=(2., 0., 33.) ),
     'zerolon' : Magnetometer(name='zerolon',csys='SM',ctype='sph',coords=(2., 33., 0.) ),
