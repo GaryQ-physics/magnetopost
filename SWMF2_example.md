@@ -64,6 +64,6 @@ emd.msph_point('SWPC_SWMF_052811_2','GMpoint6')
 ```
 then run as
 ```
-./do --rootdir=$(pwd)/../
+./do --rootdir=../
 ```
 may need to chmod +x
