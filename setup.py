@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-install_requires = ["numpy","numba"]
+install_requires = ["numpy","numba","tqdm"]
 
 setup(
     name='magnetopost',

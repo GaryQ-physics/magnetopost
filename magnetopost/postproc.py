@@ -13,6 +13,7 @@ def job_ie(points, stitch_only=False):
 
     def wrap(time):
         ie_slice = models.get_iono_slice(run, time)
+        #print("Working on ionosphere at time = {}".format(time))
 
         for point in points:
             slice_bs_pedersen(run,time, ie_slice, point)
@@ -25,11 +26,13 @@ def job_ie(points, stitch_only=False):
         else:
             from joblib import Parallel, delayed
             import multiprocessing
+            from tqdm import tqdm
+            # https://stackoverflow.com/a/49950707
             num_cores = multiprocessing.cpu_count()
             num_cores = min(num_cores, len(times), 20)
             print(f'Parallel processing {len(times)} ionosphere slices using {num_cores} cores')
             Parallel(n_jobs=num_cores)(\
-                      delayed(wrap)(time) for time in times)
+                      delayed(wrap)(time) for time in tqdm(times))
 
     for point in points:
         stitch_bs_hall(run, times, point)
@@ -37,12 +40,14 @@ def job_ie(points, stitch_only=False):
 
 
 def job_ms(points, do_summary=False, cutplanes=None, stitch_only=False):
+
     run = util.prep_run(f'{os.path.abspath(".")}/') #returns dictionary
     times = run['magnetosphere_files'].keys()
 
     def wrap(time):
         ms_slice = models.get_ms_slice_class(run, time)
-
+        
+        #print("Working on magnetosphere at time = {}".format(time))
         for point in points:
             slice_bs_fac(run,time, ms_slice, point)
             slice_bs_msph(run,time, ms_slice, point)
@@ -62,11 +67,12 @@ def job_ms(points, do_summary=False, cutplanes=None, stitch_only=False):
         else:
             from joblib import Parallel, delayed
             import multiprocessing
+            from tqdm import tqdm
             num_cores = multiprocessing.cpu_count()
             num_cores = min(num_cores, len(times), 20)
             print(f'Parallel processing {len(times)} magnetosphere slices using {num_cores} cores')
             Parallel(n_jobs=num_cores)(\
-                      delayed(wrap)(time) for time in times)
+                      delayed(wrap)(time) for time in tqdm(times))
 
     for point in points:
         stitch_bs_fac(run, times, point)
@@ -84,6 +90,6 @@ def job_ms(points, do_summary=False, cutplanes=None, stitch_only=False):
 def job(points):
     #points = ("YKC","YKC_N","YKC_S","OTT","FRD")
     #points = ("GMpoint4","GMpoint5") 
-    job_ie(points)
+    #job_ie(points)
     job_ms(points, do_summary=False)
     print('DONE JOB')
