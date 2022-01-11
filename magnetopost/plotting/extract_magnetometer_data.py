@@ -354,6 +354,17 @@ def msph_point(runname, surface_location):
     datetick('x')
     fig.savefig(f'{runname}-compareAB.pdf')
     fig.savefig(f'{runname}-compareAB.dupl.png')
+    fig.clf(); del fig
+
+    fig, axs = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(12,12), dpi=100)
+    norm(helm_rCurrents_gapSM).plot(ax=axs[0],
+                                label=r'$\oint_{\mathcal{I}}$',  color='Blue')
+    norm(B_G).plot(ax=axs[1],
+                                label=r'$\mathbf{B}_{\mathcal{G}}$',  color='Blue')
+    datetick('x')
+    fig.savefig(f'{runname}-consistency.pdf')
+    fig.savefig(f'{runname}-consistency.dupl.png')
+
 
 def main():
     surface_point('DIPTSUR2','colaba')
