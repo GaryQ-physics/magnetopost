@@ -359,8 +359,13 @@ def msph_point(runname, surface_location):
     fig, axs = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(12,12), dpi=100)
     norm(helm_rCurrents_gapSM).plot(ax=axs[0],
                                 label=r'$\oint_{\mathcal{I}}$',  color='Blue')
-    norm(B_G).plot(ax=axs[1],
-                                label=r'$\mathbf{B}_{\mathcal{G}}$',  color='Blue')
+    norm(B_G).plot(ax=axs[0],
+                                label=r'$\mathbf{B}_{\mathcal{G}}$',  color='Orange')
+    diff = norm(helm_rCurrents_gapSM) - norm(B_G)
+    rmse = gen_rmse(diff)
+    diff.plot(ax=axs[1],
+                                label='difference')
+
     datetick('x')
     fig.savefig(f'{runname}-consistency.pdf')
     fig.savefig(f'{runname}-consistency.dupl.png')
