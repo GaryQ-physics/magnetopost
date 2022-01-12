@@ -93,3 +93,8 @@ def job(points):
     #job_ie(points)
     job_ms(points, do_summary=False)
     print('DONE JOB')
+
+def plot():
+    from magnetopost.plotting import extract_magnetometer_data as emd
+    emd.surface_point('SWPC_SWMF_052811_2','YKC')
+    emd.msph_point('SWPC_SWMF_052811_2','GMpoint6')
