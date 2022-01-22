@@ -83,13 +83,14 @@ def job_ms(points, do_summary=False, cutplanes=None, stitch_only=False):
         stitch_helm_rCurrents(run, times, point, gap_csys='GSM')
         stitch_probe(run, times, point)
 
-
     if do_summary:
         stitch_summary(run, times)
 
 def job(points):
-    #points = ("YKC","YKC_N","YKC_S","OTT","FRD")
-    #points = ("GMpoint4","GMpoint5") 
-    #job_ie(points)
-    job_ms(points, do_summary=False)
+    ''' example points:
+     points = ("YKC","YKC_N","YKC_S","OTT","FRD")
+     points = ("GMpoint4","GMpoint5")
+    '''
+    job_ie(points)
+    job_ms(points)
     print('DONE JOB')
