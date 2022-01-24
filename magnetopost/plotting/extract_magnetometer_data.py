@@ -1,6 +1,8 @@
 import os
 import sys
+import re
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
 from adjustText import adjust_text
@@ -102,10 +104,10 @@ def extract_from_swmf_magnetometer_files(rundir, surface_location):
     dBPed = pd.DataFrame()
     for time, cdfname in run['magnetosphere_files'].items():
         print(cdfname)
-        if not '3d__var_2_' in cdfname:
-            raise RuntimeError('FILENAME DOES NOT FOLLOW 3d__var_2_ convention, see this line in code')
+        if not '3d__var_' in cdfname:
+            raise RuntimeError('FILENAME DOES NOT FOLLOW 3d__var_ convention')
         filename = cdfname.replace('.cdf','')
-        filename = f'{filename[:-8]}.out'.replace('3d__var_2_','mag_grid_')
+        filename = re.sub('3d__var_._','mag_grid_', f'{filename[:-8]}.out')
 
         with open(filename, 'r') as f:
             first = f.readline()
@@ -249,8 +251,6 @@ def surface_point(runname, surface_location):
     fig, axs = plt.subplots(nrows=4, ncols=2, sharex=True, figsize=(12,12), dpi=100)
 
     def foo(i,swmf,ours,title):
-        print(swmf)
-        print(ours)
         norm(swmf).plot(ax=axs[i,0],
                                                 label='SWMF magnetometer files',  color='Orange')
         norm(ours).plot(ax=axs[i,0],
