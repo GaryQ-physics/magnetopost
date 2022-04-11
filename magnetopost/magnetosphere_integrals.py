@@ -1,10 +1,9 @@
+import logging
 import numpy as np
 from numba import njit
-import datetime
 
 from hxform import hxform as hx
 from magnetopost import util
-from magnetopost.units_and_constants import phys
 
 @njit
 def _jit_B_biotsavart(ms_slice, x0, rcut, include):
@@ -49,7 +48,7 @@ def _jit_B_biotsavart(ms_slice, x0, rcut, include):
 
     #for i_eps in range(n_eps):
     #    ret[i_eps,:] = ( (unique_epsilons[i_eps]**3)/(4*np.pi) ) * ret[i_eps,:]
-    return ( 1./(4*np.pi) )* integral
+    return ( 1./(4*np.pi) )*integral
 
 
 @njit
@@ -98,8 +97,10 @@ def _jit_B_coulomb(ms_slice, x0, rcut, include):
 
 def slice_bs_msph(run, time, ms_slice, obs_point, insubset=None, subsetStr=None):
     '''
-    insubset is None (default) or a python function which acts on (N,3) float arrays returning (N,) boolean arrays
+    insubset is None (default) or a python function which acts on (N,3)
+    float arrays returning (N,) boolean arrays
     '''
+
     funcnameStr = 'bs_msph'
 
     x0 = util.GetMagnetometerCoordinates(obs_point, time, 'GSM', 'car')
@@ -108,7 +109,8 @@ def slice_bs_msph(run, time, ms_slice, obs_point, insubset=None, subsetStr=None)
         include = None
         subsetStr = ''
     else:
-        include = insubset(ms_slice.data_arr[:, [ms_slice.varidx['x'],ms_slice.varidx['y'],ms_slice.varidx['z']]])
+        idx = [ms_slice.varidx['x'], ms_slice.varidx['y'], ms_slice.varidx['z']]
+        include = insubset(ms_slice.data_arr[:, idx])
         if subsetStr is None:
             subsetStr = ''
 
@@ -118,8 +120,10 @@ def slice_bs_msph(run, time, ms_slice, obs_point, insubset=None, subsetStr=None)
     integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
 
     outname = f'{run["rundir"]}/derived/timeseries/slices/' \
-        + f'{funcnameStr}{subsetStr}-{obs_point}-{util.Tstr(time)}.npy'
+            + f'{funcnameStr}{subsetStr}-{obs_point}-{util.Tstr(time)}.npy'
     np.save(outname, integral)
+    logging.info('Wrote {}'.format(outname))
+
 
 def slice_cl_msph(run, time, ms_slice, obs_point):
     funcnameStr = 'cl_msph'
@@ -137,8 +141,9 @@ def slice_cl_msph(run, time, ms_slice, obs_point):
     integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
 
     outname = f'{run["rundir"]}/derived/timeseries/slices/' \
-        + f'{funcnameStr}{includeStr}-{obs_point}-{util.Tstr(time)}.npy'
+            + f'{funcnameStr}{includeStr}-{obs_point}-{util.Tstr(time)}.npy'
     np.save(outname, integral)
+    logging.info('Wrote {}'.format(outname))
 
 
 def stitch_bs_msph(run, times, obs_point):
@@ -151,10 +156,11 @@ def stitch_bs_msph(run, times, obs_point):
 
         integrals.append(np.load(outname))
 
-    arr_name = f'{run["rundir"]}/derived/timeseries/' \
-            + f'{funcnameStr}-{obs_point}.npy'
+    outname = f'{run["rundir"]}/derived/timeseries/' \
+             + f'{funcnameStr}-{obs_point}.npy'
     arr = np.array(integrals)
-    np.save(arr_name, arr)
+    np.save(outname, arr)
+    logging.info('Wrote {}'.format(outname))
 
 
 def stitch_cl_msph(run, times, obs_point):
@@ -163,11 +169,11 @@ def stitch_cl_msph(run, times, obs_point):
     integrals = []
     for time in times:
         outname = f'{run["rundir"]}/derived/timeseries/slices/' \
-            + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
-
+                + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
         integrals.append(np.load(outname))
 
-    arr_name = f'{run["rundir"]}/derived/timeseries/' \
+    outname = f'{run["rundir"]}/derived/timeseries/' \
             + f'{funcnameStr}-{obs_point}.npy'
     arr = np.array(integrals)
-    np.save(arr_name, arr)
+    np.save(outname, arr)
+    logging.info('Wrote {}'.format(outname))

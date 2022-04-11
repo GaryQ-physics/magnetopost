@@ -76,6 +76,7 @@ def slice_bs_pedersen(run, time, ie_slice, obs_point):
 
     outname = f'{run["rundir"]}/derived/timeseries/slices/' \
         + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
+    print("Writing {}".format(outname))
     np.save(outname, integral)
 
 
@@ -102,6 +103,7 @@ def slice_bs_hall(run, time, ie_slice, obs_point):
 
     outname = f'{run["rundir"]}/derived/timeseries/slices/' \
         + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
+    print("Writing {}".format(outname))
     np.save(outname, integral)
 
 
@@ -117,8 +119,8 @@ def stitch_bs_pedersen(run, times, obs_point):
 
     arr_name = f'{run["rundir"]}/derived/timeseries/' \
             + f'{funcnameStr}-{obs_point}.npy'
-    arr = np.array(integrals)
-    np.save(arr_name, arr)
+    print("Writing {}".format(arr_name))
+    np.save(arr_name, np.array(integrals))
 
 
 def stitch_bs_hall(run, times, obs_point):
@@ -133,8 +135,8 @@ def stitch_bs_hall(run, times, obs_point):
 
     arr_name = f'{run["rundir"]}/derived/timeseries/' \
             + f'{funcnameStr}-{obs_point}.npy'
-    arr = np.array(integrals)
-    np.save(arr_name, arr)
+    print("Writing {}".format(arr_name))
+    np.save(arr_name, np.array(integrals))
 
 
 def slice_integral_bs_bulkiono(ie_slice, obs_point):

@@ -1,13 +1,15 @@
 import os
 import sys
 import re
+import logging
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+
 from datetime import datetime
-from adjustText import adjust_text
 
 import magnetopost.util as mputil
+
 #from datetick import datetick
 def datetick(arg):
     pass
@@ -47,11 +49,11 @@ def read_ccmc_printout(filename):
     return headers, arr
 
 
-def extract_from_swmf_magnetometer_files(rundir, surface_location):
+def extract_from_swmf_magnetometer_files(rundir, surface_location, n_steps=None):
     """
     This reads the values for the different contributions to the
     magnetic field that SWMF can calculate natively.
-    These are stored at text in files of the form mag_grid____.out
+    These are stored in the text files with names of the form mag_grid____.out
 
     NOTE:
 
@@ -79,10 +81,12 @@ def extract_from_swmf_magnetometer_files(rundir, surface_location):
     (359.-0.)/(360-1)
       -> 1.0
 
-    so while lons in steps of 1. , lats are insteps of 175./174 
+    so while lons in steps of 1. , lats are in steps of 175./174 
     (to some decimal aprox that is not completely consistent between elements)
     so someone probably screwed up the linspace and meant to use (176,)
     """
+
+    logging.info("Extracting point dB information from mag_grid files in {}".format(rundir))
 
     cachepath = f'{rundir}/derived/extract_from_swmf_magnetometer_files'
     if not OVERWRITE_CACHE:
@@ -91,7 +95,7 @@ def extract_from_swmf_magnetometer_files(rundir, surface_location):
             dBFac = pd.read_pickle(f'{cachepath}/dBFac-{surface_location}.pkl')
             dBHal = pd.read_pickle(f'{cachepath}/dBHal-{surface_location}.pkl')
             dBPed = pd.read_pickle(f'{cachepath}/dBPed-{surface_location}.pkl')
-            print('using cached')
+            logging.info('Using cached calculations found in {}'.format(cachepath))
             return dBMhd, dBFac, dBHal, dBPed
         except FileNotFoundError:
             pass
@@ -102,13 +106,19 @@ def extract_from_swmf_magnetometer_files(rundir, surface_location):
     dBFac = pd.DataFrame()
     dBHal = pd.DataFrame()
     dBPed = pd.DataFrame()
+    t = 1
     for time, cdfname in run['magnetosphere_files'].items():
-        print(cdfname)
+
+        if n_steps is not None and t > n_steps:
+            break
+        t = t + 1
+        
         if not '3d__var_' in cdfname:
             raise RuntimeError('FILENAME DOES NOT FOLLOW 3d__var_ convention')
         filename = cdfname.replace('.cdf','')
         filename = re.sub('3d__var_._','mag_grid_', f'{filename[:-8]}.out')
 
+        logging.info("Reading {}".format(filename))
         with open(filename, 'r') as f:
             first = f.readline()
             second = f.readline()
@@ -127,14 +137,14 @@ def extract_from_swmf_magnetometer_files(rundir, surface_location):
                                 'dBnPed', 'dBePed', 'dBdPed') )
 
         _r, LAT, LON = mputil.GetMagnetometerCoordinates(surface_location, time, csyst, 'sph')
-        if not 0.99<_r<1.01: raise ValueError
+        if not 0.99 < _r < 1.01: raise ValueError
 
         if LON < 0:
             LON = LON + 360.
         if csyst != 'GEO':
             print(f'csyst={csyst}')
-        if abs(LAT-18.907)>1e-8 or LON != 72.815:
-            print(f'WARNING: LAT,LON={LAT},{LON}')
+        if abs(LAT - 18.907) > 1e-8 or LON != 72.815:
+            print(f'WARNING: LAT,LON = {LAT},{LON}')
 
         Tr = np.all([LON-0.5 <= arr[:, 0], 
                      arr[:, 0] <= LON+0.5, LAT-0.5 <= arr[:, 1],
@@ -147,18 +157,23 @@ def extract_from_swmf_magnetometer_files(rundir, surface_location):
         dBPed = dBPed.append(pd.Series(data=arr[k,14:17], index=ned, name=datetime(*time)))
 
     os.makedirs(cachepath, exist_ok=True)
+
+    logging.info("Saving parsed content of dB files to {cachepath}")
     dBMhd.to_pickle(f'{cachepath}/dBMhd-{surface_location}.pkl')
     dBFac.to_pickle(f'{cachepath}/dBFac-{surface_location}.pkl')
     dBHal.to_pickle(f'{cachepath}/dBHal-{surface_location}.pkl')
     dBPed.to_pickle(f'{cachepath}/dBPed-{surface_location}.pkl')
+
     return dBMhd, dBFac, dBHal, dBPed
 
 
-def extract_from_swmf_ccmc_printout_file(rundir, surface_location):
+def extract_from_swmf_ccmc_printout_file(rundir, surface_location, n_steps=None):
+
     run = mputil.prep_run(rundir)
     year = list(run['magnetosphere_files'].keys())[0][0]
-    print(year)
     filename = f'{rundir}/derived/{year}_{surface_location}_pointdata.txt'
+
+    logging.info("Reading point dB information from " + filename)
 
     headers, arr = read_ccmc_printout(filename)
     assert( headers[10:] ==('sumBn', 'sumBe', 'sumBd',
@@ -167,16 +182,23 @@ def extract_from_swmf_ccmc_printout_file(rundir, surface_location):
                             'JhdBn', 'JhdBe', 'JhdBd',
                             'JpBn', 'JpBe', 'JpBd') )
     times = np.array(arr[:,0:6], dtype=int)
+    if n_steps is not None:
+        times = times[0:n_steps]
+
 
     dtimes = [datetime(*time) for time in times]
     dBMhd = pd.DataFrame(data=arr[:,13:16], columns=ned, index=dtimes)
     dBFac = pd.DataFrame(data=arr[:,16:19], columns=ned, index=dtimes)
     dBHal = pd.DataFrame(data=arr[:,19:22], columns=ned, index=dtimes)
     dBPed = pd.DataFrame(data=arr[:,22:25], columns=ned, index=dtimes)
+
     return dBMhd, dBFac, dBHal, dBPed
 
 
 def extract_from_CalcDeltaB_file(filename):
+
+    logging.info("Reading dB information from " + filename)
+
     headers, arr = read_ccmc_printout(filename)
     assert( headers[9:] ==('B_north', 'B_east', 'B_down',
                            'B_north_mag', 'B_east_mag', 'B_down_mag',
@@ -193,7 +215,7 @@ def extract_from_CalcDeltaB_file(filename):
     return B_mag, B_fac, B_ionoSigH, B_ionoSigP # flipped order H an P
 
 
-def extract_from_magnetopost_files(rundir, surface_location):
+def extract_from_magnetopost_files(rundir, surface_location, n_steps=None):
 
     run = mputil.prep_run(rundir)
     msph_times = run['magnetosphere_files'].keys()
@@ -202,9 +224,16 @@ def extract_from_magnetopost_files(rundir, surface_location):
     msph_dtimes = [datetime(*time) for time in msph_times]
     iono_dtimes = [datetime(*time) for time in iono_times]
 
+    if n_steps is not None:
+        msph_dtimes = msph_dtimes[0:n_steps]
+        iono_dtimes = iono_dtimes[0:n_steps]
+
     def get(ftag, dtimes):
         df = pd.DataFrame()
-        dB = np.load(f'{rundir}/derived/timeseries/{ftag}-{surface_location}.npy')
+        infile = f'{rundir}/derived/timeseries/{ftag}-{surface_location}.npy'
+        logging.info(f"Reading {infile}")
+        dB = np.load(infile)
+
         df['north'] = pd.Series(data=dB[:,0], index=dtimes)
         df['east']  = pd.Series(data=dB[:,1], index=dtimes)
         df['down']  = pd.Series(data=dB[:,2], index=dtimes)
@@ -222,7 +251,7 @@ def extract_from_magnetopost_files(rundir, surface_location):
     helm_rCurrents_gapSM  = get('helm_rCurrents_gapSM', msph_dtimes)
     probe = get('probe', msph_dtimes)
 
-    return bs_msph, bs_fac, bs_hall, bs_pedersen,  cl_msph,helm_outer,helm_rCurrents_gapSM,probe
+    return bs_msph, bs_fac, bs_hall, bs_pedersen, cl_msph,helm_outer, helm_rCurrents_gapSM, probe
 
 
 def extract_all():
@@ -233,31 +262,36 @@ def extract_all():
     B_mag, B_fac, B_ionoSigH, B_ionoSigP = extract_from_CalcDeltaB_file('pointdata_751815008468.txt')
     bs_msph, bs_fac, bs_hall, bs_pedersen = extract_from_magnetopost_files(rundir, surface_location)
 
-def surface_point(runname, surface_location):
-    rundir = f'{rootdir}/{runname}/'
+
+def write_plot(fig, outfile):
+    logging.info("Writing {}.[svg,pdf,png]".format(outfile))
+    fig.savefig(outfile + '.svg')
+    fig.savefig(outfile + '.pdf')
+    fig.savefig(outfile + '.png')
+
+
+def surface_point(dir_run, surface_location, n_steps=None):
+
+    #logging.info("rundir = {}".format(dir_run))
 
     try:
-        dBMhd, dBFac, dBHal, dBPed = extract_from_swmf_ccmc_printout_file(rundir, surface_location)
-        print('used ccmc printout')
+        dBMhd, dBFac, dBHal, dBPed = extract_from_swmf_ccmc_printout_file(dir_run, surface_location, n_steps=n_steps)
     except FileNotFoundError:
-        dBMhd, dBFac, dBHal, dBPed = extract_from_swmf_magnetometer_files(rundir, surface_location)
-        print('used mag files')
+        dBMhd, dBFac, dBHal, dBPed = extract_from_swmf_magnetometer_files(dir_run, surface_location, n_steps=n_steps)
 
-    bs_msph, bs_fac, bs_hall, bs_pedersen,  cl_msph,helm_outer,helm_rCurrents_gapSM,probe = extract_from_magnetopost_files(rundir, surface_location)
+    bs_msph, bs_fac, bs_hall, bs_pedersen, cl_msph,helm_outer, helm_rCurrents_gapSM, probe = extract_from_magnetopost_files(dir_run, surface_location, n_steps=n_steps)
 
     B_G  = bs_fac + bs_hall + bs_pedersen
-    B_G2 = dBFac + dBHal+ dBPed
+    #B_G2 = dBFac + dBHal+ dBPed
 
     fig, axs = plt.subplots(nrows=4, ncols=2, sharex=True, figsize=(12,12), dpi=100)
 
-    def foo(i,swmf,ours,title):
-        norm(swmf).plot(ax=axs[i,0],
-                                                label='SWMF magnetometer files',  color='Orange')
-        norm(ours).plot(ax=axs[i,0],
-                                                label='our reproduction',  color='Blue')
+    def foo(i, swmf, ours, title):
+        norm(swmf).plot(ax=axs[i,0], label='SWMF magnetometer files', color='Orange')
+        norm(ours).plot(ax=axs[i,0], label='Our calculation', color='Blue')
         diff = norm(ours) - norm(swmf)
         rmse = gen_rmse(diff)
-        diff.plot(ax=axs[i,1], label=f'difference (RMSE={rmse:.1f})')
+        diff.plot(ax=axs[i,1], label=f'Difference (RMSE={rmse:.1f})')
 
         axs[i,0].set_title(title)
         axs[i,0].legend(title_fontsize=1)
@@ -268,10 +302,14 @@ def surface_point(runname, surface_location):
     foo(1, dBFac, bs_fac     , 'dBFac')
     foo(2, dBHal, bs_hall    , 'dBHal')
     foo(3, dBPed, bs_pedersen, 'dBPed')
-    fig.suptitle(runname)
+
+    #fig.suptitle(dir_run)
     datetick('x')
-    fig.savefig(f'{runname}-reproduceswmf.pdf')
-    fig.savefig(f'{runname}-reproduceswmf.dupl.png')
+
+    outfile = f'{dir_run}/derived/figures/compare_with_swmf'
+    write_plot(fig, outfile)
+
+
     fig.clf(); del fig
 
     fig, axs = plt.subplots(nrows=5, ncols=1, sharex=True, figsize=(12,12), dpi=100)
@@ -280,39 +318,32 @@ def surface_point(runname, surface_location):
     method_2 = B_G + bs_msph + cl_msph + helm_outer
     method_1 = B_G + helm_rCurrents_gapSM
 
-    norm(method_1).plot(ax=axs[0],
-                                label='Method 1.',  color='Blue')
-    norm(method_2).plot(ax=axs[0],
-                                label='Method 2.',  color='Orange')
+    norm(method_1).plot(ax=axs[0], label='Method 1.', color='Blue')
+    norm(method_2).plot(ax=axs[0], label='Method 2.', color='Orange')
 
     diff = norm(method_1)-norm(method_2)
     rmse = gen_rmse(diff)
-    diff.plot(ax=axs[1],
-                                label=f'(Method 1.) - (Method 2.) (RMSE={rmse:.1f})')
+    diff.plot(ax=axs[1], label=f'(Method 1.) - (Method 2.) (RMSE={rmse:.1f})')
 
-    norm(method_1).plot(ax=axs[2],
-                                label='Method 1.',  color='Blue')
-    norm(method_3).plot(ax=axs[2],
-                                label='Method 3.',  color='Orange')
+    norm(method_1).plot(ax=axs[2], label='Method 1.', color='Blue')
+    norm(method_3).plot(ax=axs[2], label='Method 3.', color='Orange')
 
     diff = norm(method_1)-norm(method_3)
     rmse = gen_rmse(diff)
-    diff.plot(ax=axs[3],
-                                label=f'(Method 1.) - (Method 3.) (RMSE={rmse:.1f})')
+    diff.plot(ax=axs[3], label=f'(Method 1.) - (Method 3.) (RMSE={rmse:.1f})')
 
-    norm(cl_msph).plot(ax=axs[4],
-                                label=r'$\int_{\mathcal{M}}$Coulomb',  color='Orange')
-    norm(helm_outer).plot(ax=axs[4],
-                                label=r'$\oint_{\mathcal{O}}$',  color='Green')
-    norm(bs_msph).plot(ax=axs[4],
-                                label=r'$\int_{\mathcal{M}}$Biot_Savart',  color='Blue')
+    norm(cl_msph).plot(ax=axs[4], label=r'$\int_{\mathcal{M}}$Coulomb', color='Orange')
+    norm(helm_outer).plot(ax=axs[4], label=r'$\oint_{\mathcal{O}}$', color='Green')
+    norm(bs_msph).plot(ax=axs[4], label=r'$\int_{\mathcal{M}}$Biot_Savart',  color='Blue')
 
     [ax.legend() for ax in axs]
     [ax.set_ylabel('nT') for ax in axs]
-    fig.suptitle(runname)
+    #fig.suptitle(runname)
     datetick('x')
-    fig.savefig(f'{runname}-compare123.pdf')
-    fig.savefig(f'{runname}-compare123.dupl.png')
+
+    outfile = f'{dir_run}/derived/figures/compare_methods_123'
+    write_plot(fig, outfile)
+
 
 def msph_point(runname, surface_location):
     rundir = f'{rootdir}/{runname}/'
@@ -351,8 +382,10 @@ def msph_point(runname, surface_location):
     [ax.set_ylabel('nT') for ax in axs]
     fig.suptitle(runname)
     datetick('x')
+
+    logging.info("Writing {}-compareAB.[pdf,png]".format(runname))
     fig.savefig(f'{runname}-compareAB.pdf')
-    fig.savefig(f'{runname}-compareAB.dupl.png')
+    fig.savefig(f'{runname}-compareAB.png')
     fig.clf(); del fig
 
     fig, axs = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(12,12), dpi=100)
@@ -364,10 +397,11 @@ def msph_point(runname, surface_location):
     rmse = gen_rmse(diff)
     diff.plot(ax=axs[1],
                                 label='difference')
-
     datetick('x')
+
+    logging.info("Writing {}-consistency.[pdf,png]".format(runname))
     fig.savefig(f'{runname}-consistency.pdf')
-    fig.savefig(f'{runname}-consistency.dupl.png')
+    fig.savefig(f'{runname}-consistency.png')
 
 
 def main():

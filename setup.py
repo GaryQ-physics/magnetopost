@@ -1,14 +1,19 @@
 from setuptools import setup, find_packages
 
-install_requires = ["numpy","numba","joblib","tqdm"]
-# also in git repos swmf_file_reader, hxform
+install_requires = [
+                        "numpy",
+                        "numba",
+                        "joblib",
+                        "hxform @ git+https://github.com/rweigel/hxform.git#egg=hxform",
+                        "swmf_file_reader @ git+https://github.com/GaryQ-physics/swmf_file_reader.git#egg=swmf_file_reader"
+                    ]
 
 setup(
     name='magnetopost',
-    version='0.0.1.1',
-    author='Gary Quaresima',
+    version='0.0.1',
+    author='Gary Quaresima and Bob Weigel',
     author_email='garyquaresima@gmail.com',
     packages=find_packages(),
-    description='post processing multiple space weather simulation models (focused on swmf)',
+    description='Post processing of magnetosphere MHD simulation data',
     install_requires=install_requires
-     )
+)

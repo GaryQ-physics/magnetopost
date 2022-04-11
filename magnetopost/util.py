@@ -1,6 +1,8 @@
 import os
 import ast
+import logging
 import numpy as np
+
 from magnetopost.config import defined_magnetometers
 from hxform import hxform as hx
 
@@ -8,29 +10,49 @@ def Tstr(time, length=6):
     return '%.4d%.2d%.2dT%.2d%.2d%.2d'%(time[:6])
 
 
-def prep_run(rundir):
-    if not rundir[-1]=='/': rundir = f'{rundir}/'
+def setup(dir_run, info):
+    assert os.path.exists(dir_run), "dir_run = " + dir_run + " not found"
+    
+    dir_derived = os.path.join(dir_run, "derived")
+    dir_slices = os.path.join(dir_derived, "timeseries", "slices")
+    dir_figures = os.path.join(dir_derived, "figures")
+    
+    if not os.path.exists(dir_derived):
+        os.mkdir(os.path.join(dir_derived))
+        logging.info("Created " + dir_derived)
+    
+    if not os.path.exists(dir_slices):
+        os.makedirs(os.path.join(dir_slices))
+        print("Created " + dir_slices)
+    
+    if not os.path.exists(dir_figures):
+        os.makedirs(os.path.join(dir_figures))
+        logging.info("Created " + dir_figures)
+    
+    from magnetopost.model_patches import SWMF
+    SWMF.generate_filelist_txts(dir_run, info)
 
-    with open(f'{rundir}derived/run.info.py', 'r') as f:
+
+def prep_run(dir_run):
+
+    with open(os.path.join(dir_run, 'derived', 'run.info.py'), 'r') as f:
         run = ast.literal_eval(f.read())
 
-    run['rundir'] = rundir
+    run['rundir'] = dir_run
 
     run['magnetosphere_files'] = {}
-    with open(rundir+'derived/magnetosphere_files.txt', 'r') as f:
+    with open(os.path.join(run['rundir'], 'derived', 'magnetosphere_files.txt'), 'r') as f:
         for line in f.readlines():
             items = line.split(' ')
             time = tuple([int(ti) for ti in items[:6]])
-            filename = f'{rundir}{items[-1][:-1]}'
-            run['magnetosphere_files'][time] = filename
+            run['magnetosphere_files'][time] = os.path.join(run['rundir'], items[-1][:-1])
 
     run['ionosphere_files'] = {}
-    with open(rundir+'derived/ionosphere_files.txt', 'r') as f:
+    with open(os.path.join(run['rundir'], 'derived', 'ionosphere_files.txt'), 'r') as f:
         for line in f.readlines():
             items = line.split(' ')
             time = tuple([int(ti) for ti in items[:6]])
-            filename = f'{rundir}{items[-1][:-1]}'
-            run['ionosphere_files'][time] = filename
+            run['ionosphere_files'][time] = os.path.join(run['rundir'], items[-1][:-1])
 
     return run
 

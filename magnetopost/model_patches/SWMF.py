@@ -1,6 +1,8 @@
-import subprocess
+import logging
+
 from swmf_file_reader import batsrus_class as bats
 from swmf_file_reader.read_ie_files import read_iono_tec
+
 
 def get_ms_slice_class(filename):
     assert(filename[-4:] == '.out')
@@ -11,23 +13,28 @@ def get_iono_slice(filename):
     return read_iono_tec(filename)
 
 
-##########################################################
-#########################################################
+def generate_filelist_txts(dir_run, info):
 
-def generate_filelist_txts():
     import os
     import re
+    import json
 
-    magnetosphere_outs = sorted(os.listdir('./GM/IO2'))
-    with open('derived/magnetosphere_files.txt','w') as fl:
+    fn = os.path.join(dir_run, 'derived/run.info.py')
+    with open(fn, 'w') as outfile:
+        outfile.write(json.dumps(info))
+
+    logging.info("Wrote {}".format(fn))
+
+    magnetosphere_outs = sorted(os.listdir(os.path.join(dir_run, 'GM/IO2')))
+    fn = os.path.join(dir_run, 'derived/magnetosphere_files.txt')
+    k = 0
+    with open(fn,'w') as fl:
         regex = r"3d__var_.*\.out$"
-
         for fname in magnetosphere_outs:
             if re.search(regex, fname):
+                k = k + 1
                 assert(fname[:8] == '3d__var_')
-                PlotNumber = int(fname[8]) # hopefully this is only in the single didgets or this will break
                 assert(fname[9] == '_')
-
                 if fname[10] == 'e':
                     Y = int(fname[11:15])
                     M = int(fname[15:17])
@@ -39,17 +46,20 @@ def generate_filelist_txts():
                     assert(fname[26] == '-')
                     mil = int(fname[27:30])
                     assert(fname[30:] == '.out')
-                    fl.write(f'{Y} {M} {D} {h} {m} {s} {mil} ./GM/IO2/{fname}\n')
+                    fl.write(f'{Y} {M} {D} {h} {m} {s} {mil} GM/IO2/{fname}\n')
 
+    logging.info("Wrote {} file names to {}".format(k, fn))
 
-    ionosphere_outs = sorted(os.listdir('./IE/ionosphere'))
-    with open('derived/ionosphere_files.txt','w') as fl:
+    ionosphere_outs = sorted(os.listdir(os.path.join(dir_run, 'IE/ionosphere')))
+    fn = os.path.join(dir_run, 'derived/ionosphere_files.txt')
+    k = 0
+    with open(fn,'w') as fl:
         regex = r"i_.*\.tec$"
 
         for fname in ionosphere_outs:
             if re.search(regex, fname):
+                k = k + 1
                 assert(fname[:2] == 'i_')
-
                 if fname[2] == 'e':
                     Y = int(fname[3:7])
                     M = int(fname[7:9])
@@ -61,5 +71,6 @@ def generate_filelist_txts():
                     assert(fname[18] == '-')
                     mil = int(fname[19:22])
                     assert(fname[22:] == '.tec')
-                    fl.write(f'{Y} {M} {D} {h} {m} {s} {mil} ./IE/ionosphere/{fname}\n')
+                    fl.write(f'{Y} {M} {D} {h} {m} {s} {mil} IE/ionosphere/{fname}\n')
 
+    logging.info("Wrote {} file names to {}".format(k, fn))
