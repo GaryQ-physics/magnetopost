@@ -13,11 +13,13 @@ def get_iono_slice(filename):
     return read_iono_tec(filename)
 
 
-def generate_filelist_txts(dir_run, info):
+def generate_filelist_txts(info):
 
     import os
     import re
     import json
+
+    dir_run = info["dir_run"]
 
     fn = os.path.join(dir_run, 'derived/run.info.py')
     with open(fn, 'w') as outfile:

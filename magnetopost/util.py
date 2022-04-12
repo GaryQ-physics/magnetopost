@@ -10,10 +10,10 @@ def Tstr(time, length=6):
     return '%.4d%.2d%.2dT%.2d%.2d%.2d'%(time[:6])
 
 
-def setup(dir_run, info):
-    assert os.path.exists(dir_run), "dir_run = " + dir_run + " not found"
-    
-    dir_derived = os.path.join(dir_run, "derived")
+def setup(info):
+    assert os.path.exists(info["dir_run"]), "dir_run = " + info["dir_run"] + " not found"
+
+    dir_derived = os.path.join(info["dir_run"], "derived")
     dir_slices = os.path.join(dir_derived, "timeseries", "slices")
     dir_figures = os.path.join(dir_derived, "figures")
     
@@ -28,9 +28,13 @@ def setup(dir_run, info):
     if not os.path.exists(dir_figures):
         os.makedirs(os.path.join(dir_figures))
         logging.info("Created " + dir_figures)
-    
-    from magnetopost.model_patches import SWMF
-    SWMF.generate_filelist_txts(dir_run, info)
+
+    if info['file_type'] == 'out':
+        from magnetopost.model_patches import SWMF_out
+        SWMF_out.generate_filelist_txts(info)
+    if info['file_type'] == 'cdf':
+        from magnetopost.model_patches import SWMF_cdf
+        SWMF_cdf.generate_filelist_txts(info)
 
 
 def prep_run(dir_run):

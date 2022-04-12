@@ -8,11 +8,7 @@ def get_ms_slice_class(filename):
 def get_iono_slice(filename):
     return read_iono_cdf(filename)
 
-
-##########################################################
-#########################################################
-
-def generate_filelist_txts():
+def generate_filelist_txts(info):
     import subprocess
     script = '''
 #!/bin/sh

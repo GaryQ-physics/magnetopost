@@ -8,9 +8,9 @@ from magnetopost.boundary_integrals import slice_helm_outer, stitch_helm_outer
 from magnetopost.probe import slice_probe, stitch_probe
 
 
-def job_ie(points, dir_run, n_steps=None, stitch_only=False):
+def job_ie(info, points, n_steps=None, stitch_only=False):
 
-    run = util.prep_run(dir_run) # returns dictionary
+    run = util.prep_run(info["dir_run"]) # returns dictionary
     times = list(run['ionosphere_files'].keys())
 
     if n_steps is not None:
@@ -20,7 +20,7 @@ def job_ie(points, dir_run, n_steps=None, stitch_only=False):
         logging.info("Working on ionosphere at time = {}".format(time))
         logging.info("Reading data for = {}".format(time))
 
-        ie_slice = models.get_iono_slice(run, time)
+        ie_slice = models.get_iono_slice(info, run, time)
         for point in points:
             slice_bs_pedersen(run, time, ie_slice, point)
             slice_bs_hall(run, time, ie_slice, point)
@@ -44,9 +44,10 @@ def job_ie(points, dir_run, n_steps=None, stitch_only=False):
     logging.info("Finished ionosphere processing")
 
 
-def job_ms(points, dir_run, n_steps=None, stitch_only=False, do_summary=False):
+def job_ms(info, points, n_steps=None, stitch_only=False, do_summary=False):
 
-    run = util.prep_run(dir_run) # returns dict
+
+    run = util.prep_run(info["dir_run"]) # returns dict
     times = list(run['magnetosphere_files'].keys())
 
     if n_steps is not None:
@@ -55,7 +56,7 @@ def job_ms(points, dir_run, n_steps=None, stitch_only=False, do_summary=False):
     def wrap(time):
         logging.info("Working on magnetosphere at time = {}".format(time))
         logging.info("Reading data for = {}".format(time))
-        ms_slice = models.get_ms_slice_class(run, time)
+        ms_slice = models.get_ms_slice_class(info, run, time)
 
         logging.info("Computing integrals for = {}".format(time))
         for point in points:
