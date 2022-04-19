@@ -174,12 +174,13 @@ def extract_from_swmf_ccmc_printout_file(rundir, surface_location, n_steps=None)
                             'facdBn', 'facdBe', 'facdBd',
                             'JhdBn', 'JhdBe', 'JhdBd',
                             'JpBn', 'JpBe', 'JpBd') )
-    times = np.array(arr[:,0:6], dtype=int)
+
     if n_steps is not None:
-        times = times[0:n_steps]
+        arr = arr[0:n_steps,:]
 
-
+    times = np.array(arr[:,0:6], dtype=int)
     dtimes = [datetime(*time) for time in times]
+
     dBMhd = pd.DataFrame(data=arr[:,13:16], columns=ned, index=dtimes)
     dBFac = pd.DataFrame(data=arr[:,16:19], columns=ned, index=dtimes)
     dBHal = pd.DataFrame(data=arr[:,19:22], columns=ned, index=dtimes)

@@ -21,9 +21,9 @@ info = {
         "dir_run": "/Users/weigel/git/magnetopost/runs/SWPC_SWMF_052811_2"
 }
 
-points = ["YKC"] # Locations to compute B. See config.py for list of known points.
+points = ["YKC"]    # Locations to compute B. See config.py for list of known points.
 plot_only = False   # If True, re-create plots only
-n_steps = 10        # If None, process all files
+n_steps = None      # If None, process all files
 
 if plot_only == False:
     # Create output dirs and list of files to process
