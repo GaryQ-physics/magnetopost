@@ -1,10 +1,9 @@
+import logging
 import numpy as np
 from numba import njit
-import datetime
 
 from hxform import hxform as hx
 from magnetopost import util
-from magnetopost.units_and_constants import phys
 
 @njit
 def get_integrand(x, normal, x0, ms_slice):
@@ -72,7 +71,8 @@ def _jit_helm_outer(ms_slice, x0):
     return integral
 
 
-def slice_helm_outer(run, time, ms_slice, obs_point):
+def helm_outer(info, time, ms_slice, obs_point):
+
     funcnameStr = 'helm_outer'
 
     x0 = util.GetMagnetometerCoordinates(obs_point, time, 'GSM', 'car')
@@ -82,27 +82,8 @@ def slice_helm_outer(run, time, ms_slice, obs_point):
     x0 = hx.GSMtoSM(x0, time, ctype_in='car', ctype_out='car')
     integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
 
-    outname = f'{run["rundir"]}/derived/timeseries/slices/' \
+    outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
         + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
     np.save(outname, integral)
+    logging.info(f"Writing {outname}")
 
-
-def stitch_helm_outer(run, times, obs_point):
-    funcnameStr = 'helm_outer'
-
-    integrals = []
-    for time in times:
-        outname = f'{run["rundir"]}/derived/timeseries/slices/' \
-            + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
-
-        integrals.append(np.load(outname))
-
-    arr_name = f'{run["rundir"]}/derived/timeseries/' \
-            + f'{funcnameStr}-{obs_point}.npy'
-    arr = np.array(integrals)
-    np.save(arr_name, arr)
-
-if __name__ == '__main__':
-    from magnetopost.model_patches import SWMF
-    sl = SWMF.get_ms_slice_class('/home/gary/temp/3d__var_3_e20031120-070000-000.out')
-    slice_helm_outer(None, (2019,9,2,4,11,0), sl, "origin")

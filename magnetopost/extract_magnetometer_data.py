@@ -42,7 +42,7 @@ def read_ccmc_printout(filename):
     return headers, arr
 
 
-def extract_from_swmf_magnetometer_files(rundir, surface_location, n_steps=None):
+def extract_from_swmf_magnetometer_files(info, surface_location, n_steps=None):
     """
     This reads the values for the different contributions to the
     magnetic field that SWMF can calculate natively.
@@ -79,9 +79,9 @@ def extract_from_swmf_magnetometer_files(rundir, surface_location, n_steps=None)
     so someone probably screwed up the linspace and meant to use (176,)
     """
 
-    logging.info("Extracting point dB information from mag_grid files in {}".format(rundir))
+    logging.info("Extracting point dB information from mag_grid files in {}".format(info["dir_run"]))
 
-    cachepath = f'{rundir}/derived/extract_from_swmf_magnetometer_files'
+    cachepath = f'{info["dir_run"]}/derived/extract_from_swmf_magnetometer_files'
     if not OVERWRITE_CACHE:
         try:
             dBMhd = pd.read_pickle(f'{cachepath}/dBMhd-{surface_location}.pkl')
@@ -93,14 +93,12 @@ def extract_from_swmf_magnetometer_files(rundir, surface_location, n_steps=None)
         except FileNotFoundError:
             pass
 
-    run = mputil.prep_run(rundir)
-
     dBMhd = pd.DataFrame()
     dBFac = pd.DataFrame()
     dBHal = pd.DataFrame()
     dBPed = pd.DataFrame()
     t = 1
-    for time, cdfname in run['magnetosphere_files'].items():
+    for time, cdfname in info['files']['magnetosphere'].items():
 
         if n_steps is not None and t > n_steps:
             break
@@ -160,11 +158,10 @@ def extract_from_swmf_magnetometer_files(rundir, surface_location, n_steps=None)
     return dBMhd, dBFac, dBHal, dBPed
 
 
-def extract_from_swmf_ccmc_printout_file(rundir, surface_location, n_steps=None):
+def extract_from_swmf_ccmc_printout_file(info, surface_location, n_steps=None):
 
-    run = mputil.prep_run(rundir)
-    year = list(run['magnetosphere_files'].keys())[0][0]
-    filename = f'{rundir}/derived/{year}_{surface_location}_pointdata.txt'
+    year = list(info['files']['magnetosphere'].keys())[0][0]
+    filename = f'{info["dir_run"]}/derived/{year}_{surface_location}_pointdata.txt'
 
     logging.info("Reading point dB information from " + filename)
 
@@ -209,11 +206,10 @@ def extract_from_CalcDeltaB_file(filename):
     return B_mag, B_fac, B_ionoSigH, B_ionoSigP # flipped order H an P
 
 
-def extract_from_magnetopost_files(rundir, surface_location, n_steps=None):
+def extract_from_magnetopost_files(info, surface_location, n_steps=None):
 
-    run = mputil.prep_run(rundir)
-    msph_times = run['magnetosphere_files'].keys()
-    iono_times = run['ionosphere_files'].keys()
+    msph_times = info['files']['magnetosphere'].keys()
+    iono_times = info['files']['ionosphere'].keys()
 
     msph_dtimes = [datetime(*time) for time in msph_times]
     iono_dtimes = [datetime(*time) for time in iono_times]
@@ -224,7 +220,7 @@ def extract_from_magnetopost_files(rundir, surface_location, n_steps=None):
 
     def get(ftag, dtimes):
         df = pd.DataFrame()
-        infile = f'{rundir}/derived/timeseries/{ftag}-{surface_location}.npy'
+        infile = f'{info["dir_run"]}/derived/timeseries/{ftag}-{surface_location}.npy'
         logging.info(f"Reading {infile}")
         dB = np.load(infile)
 
@@ -243,6 +239,7 @@ def extract_from_magnetopost_files(rundir, surface_location, n_steps=None):
     cl_msph     = get('cl_msph', msph_dtimes)
     helm_outer  = get('helm_outer', msph_dtimes)
     helm_rCurrents_gapSM  = get('helm_rCurrents_gapSM', msph_dtimes)
+
     probe = get('probe', msph_dtimes)
 
     return bs_msph, bs_fac, bs_hall, bs_pedersen, cl_msph,helm_outer, helm_rCurrents_gapSM, probe

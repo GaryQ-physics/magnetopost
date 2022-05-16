@@ -1,6 +1,6 @@
 import numpy as np
+import logging
 from numba import njit
-import datetime
 
 from hxform import hxform as hx
 from magnetopost import util
@@ -50,7 +50,7 @@ def _integral_bs(X, Y, Z, x0, JX, JY, JZ, Measure):
 #          Jh_IID(i,j,:) = cross_product(bIono_D, eIono_IID(i,j,:))*SigmaH(i,j)
 #          Jp_IID(i,j,:) = eIono_IID(i,j,:) * SigmaP(i,j)
 
-def slice_bs_pedersen(run, time, ie_slice, obs_point):
+def bs_pedersen(info, time, ie_slice, obs_point):
     funcnameStr = 'bs_pedersen'
 
     x0 = util.GetMagnetometerCoordinates(obs_point, time, 'SM', 'car')
@@ -74,13 +74,13 @@ def slice_bs_pedersen(run, time, ie_slice, obs_point):
     integral = scalefact*_integral_bs(X,Y,Z,x0,KX,KY,KZ,Measure)
     integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
 
-    outname = f'{run["rundir"]}/derived/timeseries/slices/' \
+    outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
         + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
-    print("Writing {}".format(outname))
     np.save(outname, integral)
+    logging.info(f"Wrote {outname}")
 
 
-def slice_bs_hall(run, time, ie_slice, obs_point):
+def bs_hall(info, time, ie_slice, obs_point):
     funcnameStr = 'bs_hall'
 
     x0 = util.GetMagnetometerCoordinates(obs_point, time, 'SM', 'car')
@@ -101,45 +101,14 @@ def slice_bs_hall(run, time, ie_slice, obs_point):
     integral = scalefact*_integral_bs(XYZ[:,0],XYZ[:,1],XYZ[:,2],x0,K[:,0],K[:,1],K[:,2],Measure)
     integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
 
-    outname = f'{run["rundir"]}/derived/timeseries/slices/' \
+    outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
         + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
-    print("Writing {}".format(outname))
     np.save(outname, integral)
-
-
-def stitch_bs_pedersen(run, times, obs_point):
-    funcnameStr = 'bs_pedersen'
-
-    integrals = []
-    for time in times:
-        outname = f'{run["rundir"]}/derived/timeseries/slices/' \
-            + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
-
-        integrals.append(np.load(outname))
-
-    arr_name = f'{run["rundir"]}/derived/timeseries/' \
-            + f'{funcnameStr}-{obs_point}.npy'
-    print("Writing {}".format(arr_name))
-    np.save(arr_name, np.array(integrals))
-
-
-def stitch_bs_hall(run, times, obs_point):
-    funcnameStr = 'bs_hall'
-
-    integrals = []
-    for time in times:
-        outname = f'{run["rundir"]}/derived/timeseries/slices/' \
-            + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
-
-        integrals.append(np.load(outname))
-
-    arr_name = f'{run["rundir"]}/derived/timeseries/' \
-            + f'{funcnameStr}-{obs_point}.npy'
-    print("Writing {}".format(arr_name))
-    np.save(arr_name, np.array(integrals))
+    logging.info(f"Wrote {outname}")
 
 
 def slice_integral_bs_bulkiono(ie_slice, obs_point):
+    # Not used
     data_arr, varidx, units = ie_slice
 
     X  = data_arr[varidx['X'] , :]
@@ -156,28 +125,4 @@ def slice_integral_bs_bulkiono(ie_slice, obs_point):
 
     integral = scalefact*_integral_bs(X,Y,Z,x0,Jx,Jy,Jz,Measure)
     print(integral)
-
-
-
-if __name__ == '__main__':
-    fname = '/home/gary/temp/i_e20190902-041100-000.tec'
-    from magnetopost.model_patches import SWMF
-    #sl = SWMF.get_iono_slice(fname)
-    #data_arr, varidx, units = sl
-    #print(varidx)
-    #print(units)
-    #print(data_arr.shape)
-    #
-    #X  = data_arr[varidx['X'] , :]
-    #Y  = data_arr[varidx['Y'] , :]
-    #Z  = data_arr[varidx['Z'] , :]
-    #R = np.sqrt(X**2 + Y**2 + Z**2)
-    #print(R)
-    ## from swmf's PostIONO.f90
-    #Radius = (6378.+100.)/6378.
-    #print(Radius)
-    #print(4*np.pi*Radius**2)
-    #print(np.sum(data_arr[varidx['measure'] , :]))
-
-    #slice_bs_hall(None, (2019,9,2,4,11,0), sl, "origin")
 

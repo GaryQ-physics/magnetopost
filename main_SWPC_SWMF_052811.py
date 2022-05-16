@@ -21,19 +21,19 @@ info = {
         "dir_run": "/Users/weigel/git/magnetopost/runs/SWPC_SWMF_052811_2"
 }
 
-points = ["YKC"]    # Locations to compute B. See config.py for list of known points.
-plot_only = False   # If True, re-create plots only
-n_steps = None      # If None, process all files
+points = ["YKC"]     # Locations to compute B. See config.py for list of known points.
+compute = True
+plot    = True
+n_steps = 6         # If None, process all files
 
-if plot_only == False:
-    # Create output dirs and list of files to process
-    mp.util.setup(info)
+# Create output dirs if needed and list of files to process
+mp.util.setup(info)
 
-    # Do calculations
+if compute:
     mp.postproc.job_ie(info, points, n_steps=n_steps)
     mp.postproc.job_ms(info, points, n_steps=n_steps)
 
-for point in points:
-    mp.plot.surf_point(info, point, n_steps=n_steps)
-    mp.plot.msph_point(info, point, n_steps=n_steps)
-
+if plot:
+    for point in points:
+        mp.plot.surf_point(info, point, n_steps=n_steps)
+        mp.plot.msph_point(info, point, n_steps=n_steps)

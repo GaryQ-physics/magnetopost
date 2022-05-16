@@ -95,7 +95,7 @@ def _jit_B_coulomb(ms_slice, x0, rcut, include):
     return ( 1./(4*np.pi) )* integral
 
 
-def slice_bs_msph(run, time, ms_slice, obs_point, insubset=None, subsetStr=None):
+def slice_bs_msph(info, time, ms_slice, obs_point, insubset=None, subsetStr=None):
     '''
     insubset is None (default) or a python function which acts on (N,3)
     float arrays returning (N,) boolean arrays
@@ -109,23 +109,24 @@ def slice_bs_msph(run, time, ms_slice, obs_point, insubset=None, subsetStr=None)
         include = None
         subsetStr = ''
     else:
-        idx = [ms_slice.varidx['x'], ms_slice.varidx['y'], ms_slice.varidx['z']]
-        include = insubset(ms_slice.data_arr[:, idx])
+        include = insubset(ms_slice.data_arr[:, [ms_slice.varidx['x'],ms_slice.varidx['y'],ms_slice.varidx['z']]])
+        #idx = [ms_slice.varidx['x'], ms_slice.varidx['y'], ms_slice.varidx['z']]
+        #include = insubset(ms_slice.data_arr[:, idx])
         if subsetStr is None:
             subsetStr = ''
 
-    integral = _jit_B_biotsavart(ms_slice, x0, run['rCurrents'], include)
+    integral = _jit_B_biotsavart(ms_slice, x0, info['rCurrents'], include)
     integral = hx.GSMtoSM(integral, time, ctype_in='car', ctype_out='car')
     x0 = hx.GSMtoSM(x0, time, ctype_in='car', ctype_out='car')
     integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
 
-    outname = f'{run["rundir"]}/derived/timeseries/slices/' \
+    outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
             + f'{funcnameStr}{subsetStr}-{obs_point}-{util.Tstr(time)}.npy'
     np.save(outname, integral)
     logging.info('Wrote {}'.format(outname))
 
 
-def slice_cl_msph(run, time, ms_slice, obs_point):
+def slice_cl_msph(info, time, ms_slice, obs_point):
     funcnameStr = 'cl_msph'
 
     x0 = util.GetMagnetometerCoordinates(obs_point, time, 'GSM', 'car')
@@ -135,45 +136,46 @@ def slice_cl_msph(run, time, ms_slice, obs_point):
     includeStr = ''
     include = None
 
-    integral = _jit_B_coulomb(ms_slice, x0, run['rCurrents'], include)
+    integral = _jit_B_coulomb(ms_slice, x0, info['rCurrents'], include)
     integral = hx.GSMtoSM(integral, time, ctype_in='car', ctype_out='car')
     x0 = hx.GSMtoSM(x0, time, ctype_in='car', ctype_out='car')
     integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
 
-    outname = f'{run["rundir"]}/derived/timeseries/slices/' \
+    print(integral)
+    outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
             + f'{funcnameStr}{includeStr}-{obs_point}-{util.Tstr(time)}.npy'
     np.save(outname, integral)
-    logging.info('Wrote {}'.format(outname))
+    logging.info(f'Wrote {outname}')
 
 
-def stitch_bs_msph(run, times, obs_point):
+def stitch_bs_msph(info, times, obs_point):
     funcnameStr = 'bs_msph'
 
     integrals = []
     for time in times:
-        outname = f'{run["rundir"]}/derived/timeseries/slices/' \
+        outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
             + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
 
         integrals.append(np.load(outname))
 
-    outname = f'{run["rundir"]}/derived/timeseries/' \
+    outname = f'{info["dir_run"]}/derived/timeseries/' \
              + f'{funcnameStr}-{obs_point}.npy'
     arr = np.array(integrals)
     np.save(outname, arr)
-    logging.info('Wrote {}'.format(outname))
+    logging.info(f'Wrote {outname}')
 
 
-def stitch_cl_msph(run, times, obs_point):
+def stitch_cl_msph(info, times, obs_point):
     funcnameStr = 'cl_msph'
 
     integrals = []
     for time in times:
-        outname = f'{run["rundir"]}/derived/timeseries/slices/' \
+        outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
                 + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
         integrals.append(np.load(outname))
 
-    outname = f'{run["rundir"]}/derived/timeseries/' \
+    outname = f'{info["dir_run"]}/derived/timeseries/' \
             + f'{funcnameStr}-{obs_point}.npy'
     arr = np.array(integrals)
     np.save(outname, arr)
-    logging.info('Wrote {}'.format(outname))
+    logging.info(f'Wrote {outname}')

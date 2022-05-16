@@ -1,8 +1,9 @@
+import logging
 import numpy as np
 from magnetopost import util
 
 
-def slice_probe(run, time, ms_slice, obs_point):
+def slice_probe(info, time, ms_slice, obs_point):
     funcnameStr = 'probe'
 
     x0 = util.GetMagnetometerCoordinates(obs_point, time, 'GSM', 'car')
@@ -24,22 +25,24 @@ def slice_probe(run, time, ms_slice, obs_point):
 
     arr = np.array([b1x, b1y, b1z, bx, by, bz, jx, jy, jz, ux, uy, uz, p, rho])
 
-    outname = f'{run["rundir"]}/derived/timeseries/slices/' \
+    outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
         + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
     np.save(outname, arr)
+    logging.info(f"Wrote {outname}")
 
 
-def stitch_probe(run, times, obs_point):
+def stitch_probe(info, times, obs_point):
     funcnameStr = 'probe'
 
     arrs = []
     for time in times:
-        outname = f'{run["rundir"]}/derived/timeseries/slices/' \
+        outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
             + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
 
         arrs.append(np.load(outname))
 
-    name = f'{run["rundir"]}/derived/timeseries/' \
+    outname = f'{info["dir_run"]}/derived/timeseries/' \
             + f'{funcnameStr}-{obs_point}.npy'
     arrs = np.array(arrs)
-    np.save(name, arrs)
+    np.save(outname, arrs)
+    logging.info(f"Wrote {outname}")

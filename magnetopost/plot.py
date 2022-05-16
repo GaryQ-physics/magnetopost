@@ -23,13 +23,12 @@ def surf_point(info, surface_location, n_steps=None):
 
     #logging.info("rundir = {}".format(dir_run))
 
-    print(surface_location)
     if info['file_type'] == "cdf":
-        dBMhd, dBFac, dBHal, dBPed = mp.extract_magnetometer_data.extract_from_swmf_ccmc_printout_file(info["dir_run"], surface_location, n_steps=n_steps)
+        dBMhd, dBFac, dBHal, dBPed = mp.extract_magnetometer_data.extract_from_swmf_ccmc_printout_file(info, surface_location, n_steps=n_steps)
     if info['file_type'] == "out":
-        dBMhd, dBFac, dBHal, dBPed = mp.extract_magnetometer_data.extract_from_swmf_magnetometer_files(info["dir_run"], surface_location, n_steps=n_steps)
+        dBMhd, dBFac, dBHal, dBPed = mp.extract_magnetometer_data.extract_from_swmf_magnetometer_files(info, surface_location, n_steps=n_steps)
 
-    bs_msph, bs_fac, bs_hall, bs_pedersen, cl_msph, helm_outer, helm_rCurrents_gapSM, probe = mp.extract_magnetometer_data.extract_from_magnetopost_files(info["dir_run"], surface_location, n_steps=n_steps)
+    bs_msph, bs_fac, bs_hall, bs_pedersen, cl_msph, helm_outer, helm_rCurrents_gapSM, probe = mp.extract_magnetometer_data.extract_from_magnetopost_files(info, surface_location, n_steps=n_steps)
 
     B_G  = bs_fac + bs_hall + bs_pedersen
     #B_G2 = dBFac + dBHal+ dBPed
@@ -97,7 +96,7 @@ def surf_point(info, surface_location, n_steps=None):
 
 def msph_point(info, surface_location, n_steps=None):
 
-    bs_msph, bs_fac, bs_hall, bs_pedersen,  cl_msph, helm_outer, helm_rCurrents_gapSM,probe = mp.extract_magnetometer_data.extract_from_magnetopost_files(info["dir_run"], surface_location, n_steps=n_steps)
+    bs_msph, bs_fac, bs_hall, bs_pedersen,  cl_msph, helm_outer, helm_rCurrents_gapSM, probe = mp.extract_magnetometer_data.extract_from_magnetopost_files(info, surface_location, n_steps=n_steps)
     B_G  = bs_fac + bs_hall + bs_pedersen
     #B_G2 = dBFac + dBHal+ dBPed
 
@@ -136,7 +135,6 @@ def msph_point(info, surface_location, n_steps=None):
     logging.info(f"Writing {outfile}-compareAB.[pdf,png]")
     write_plot(fig, outfile)
 
-    fig.clf(); del fig
 
     fig, axs = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(12,12), dpi=100)
     norm(helm_rCurrents_gapSM).plot(ax=axs[0],

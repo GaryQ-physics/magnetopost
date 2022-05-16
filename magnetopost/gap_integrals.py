@@ -1,6 +1,6 @@
+import logging
 import numpy as np
 from numba import njit
-import datetime
 
 from hxform import hxform as hx
 from magnetopost import util
@@ -104,7 +104,8 @@ def _jit_mhd_SurfaceIntegral(ms_slice, GM_2_gap, x0, nTheta,nPhi, rCurrents):
 
 
 @njit
-def _jit_fac_integral(ms_slice, GM_2_gap, x0, nTheta,nPhi,nR, rCurrents):
+def _jit_fac_integral(ms_slice, GM_2_gap, x0, nTheta, nPhi, nR, rCurrents):
+
     # x0 and returned dB_fac are in cartesian gap_csys coordinates (default SMG)
     rIonosphere = 1.01725 # rEarth + iono_height #!!! hard coded
 
@@ -170,7 +171,8 @@ def _jit_fac_integral(ms_slice, GM_2_gap, x0, nTheta,nPhi,nR, rCurrents):
     return dB_fac
 
 
-def slice_bs_fac(run, time, ms_slice, obs_point, nTheta=181,nPhi=180,nR=30, gap_csys='SM'):
+def slice_bs_fac(info, time, ms_slice, obs_point, nTheta=181, nPhi=180, nR=30, gap_csys='SM'):
+
     funcnameStr = 'bs_fac'
 
     assert(gap_csys=='SM')
@@ -180,17 +182,18 @@ def slice_bs_fac(run, time, ms_slice, obs_point, nTheta=181,nPhi=180,nR=30, gap_
 
     GM_2_gap = hx.get_transform_matrix(time, GM_csys, gap_csys)
 
-    dB_fac = _jit_fac_integral(ms_slice, GM_2_gap, x0, nTheta,nPhi,nR, run['rCurrents'])
+    dB_fac = _jit_fac_integral(ms_slice, GM_2_gap, x0, nTheta,nPhi,nR, info['rCurrents'])
     dB_fac = (phys['mu0']*phys['muA']/phys['m']**2) * dB_fac
     dB_fac = hx.get_NED_vector_components(dB_fac.reshape(1,3), x0.reshape(1,3)).ravel()
 
-    outname = f'{run["rundir"]}/derived/timeseries/slices/' \
+    outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
         + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
 
     np.save(outname, dB_fac)
+    logging.info(f"Writing {outname}")
 
 
-def slice_helm_rCurrents(run, time, ms_slice, obs_point, nTheta=181,nPhi=180, gap_csys='SM'):
+def slice_helm_rCurrents(info, time, ms_slice, obs_point, nTheta=181,nPhi=180, gap_csys='SM'):
     funcnameStr = 'helm_rCurrents'
 
     x0 = util.GetMagnetometerCoordinates(obs_point, time, gap_csys, 'car')
@@ -199,47 +202,35 @@ def slice_helm_rCurrents(run, time, ms_slice, obs_point, nTheta=181,nPhi=180, ga
 
     GM_2_gap = hx.get_transform_matrix(time, GM_csys, gap_csys)
 
-    dB_mhd_SurfaceIntegral = _jit_mhd_SurfaceIntegral(ms_slice, GM_2_gap, x0, nTheta,nPhi, run['rCurrents'])
+    dB_mhd_SurfaceIntegral = _jit_mhd_SurfaceIntegral(ms_slice, GM_2_gap, x0, nTheta,nPhi, info['rCurrents'])
     dB_mhd_SurfaceIntegral = hx.transform(dB_mhd_SurfaceIntegral, time, gap_csys, 'SM')
     x0 = hx.transform(x0, time, gap_csys, 'SM')
     dB_mhd_SurfaceIntegral = hx.get_NED_vector_components(dB_mhd_SurfaceIntegral.reshape(1,3), x0.reshape(1,3)).ravel()
 
-    outname = f'{run["rundir"]}/derived/timeseries/slices/' \
+    outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
         + f'{funcnameStr}_gap{gap_csys}-{obs_point}-{util.Tstr(time)}.npy'
 
     np.save(outname, dB_mhd_SurfaceIntegral)
+    logging.info(f"Writing {outname}")
 
 
-def stitch_bs_fac(run, times, obs_point):
-    funcnameStr = 'bs_fac'
-
-    integrals = []
-    for time in times:
-        outname = f'{run["rundir"]}/derived/timeseries/slices/' \
-            + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
-
-        integrals.append(np.load(outname))
-
-    arr_name = f'{run["rundir"]}/derived/timeseries/' \
-            + f'{funcnameStr}-{obs_point}.npy'
-    arr = np.array(integrals)
-    np.save(arr_name, arr)
 
 
-def stitch_helm_rCurrents(run, times, obs_point, gap_csys='SM'):
+def stitch_helm_rCurrents(info, times, obs_point, gap_csys='SM'):
     funcnameStr = 'helm_rCurrents'
 
     integrals = []
     for time in times:
-        outname = f'{run["rundir"]}/derived/timeseries/slices/' \
+        outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
             + f'{funcnameStr}_gap{gap_csys}-{obs_point}-{util.Tstr(time)}.npy'
 
         integrals.append(np.load(outname))
 
-    arr_name = f'{run["rundir"]}/derived/timeseries/' \
+    outname = f'{info["dir_run"]}/derived/timeseries/' \
             + f'{funcnameStr}_gap{gap_csys}-{obs_point}.npy'
     arr = np.array(integrals)
-    np.save(arr_name, arr)
+    np.save(outname, arr)
+    logging.info(f"Writing {outname}")
 
 
 if __name__ == '__main__':
