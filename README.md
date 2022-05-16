@@ -6,7 +6,7 @@ Given directory containing output files from a SWMF run<sup>\*</sup>, the magnet
 
 1. computing the surface integral over the boundary between the near--Earth and far--Earth region (denoted by $\oint_{\mathcal{I}}$),
 2. adding the Biot--Savart integral ($\int_{\mathcal{M}}\text{Biot--Savart}$) and the Coulomb integral ($\int_{\mathcal{M}}\text{Coulomb}$) over the far--Earth region, $\mathcal{M}$, to the a surface integral over the outer simulation surface ($\oint_{\mathcal{O}}$), and
-3. computing the Biot--Savart integral, $\int_{\mathcal{M}}\text{Biot--Savart}$, only,
+3. computing the Biot--Savart integral, $\int_{\mathcal{M}}\text{Biot--Savart}$ only (similar to [Rastätter et al., 2014](https://doi.org/10.1002/2014SW001083)).
 
 The resulting field from these methods is then added to the Biot--Savart integral of the currents in near--Earth region to give the total $\mathbf{B}$ on Earth's surface.
 
