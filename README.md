@@ -1,46 +1,37 @@
-# Magnetosphere
+# Overview
+
+A set of post--processing scripts written in support of the paper [Blake et al., 2021, Recreating the Horizontal Magnetic Field at Colaba During the Carrington Event With Geospace Simulations](https://doi.org/10.1029/2020SW002585) and a draft follow-up paper.
+
+Given directory containing output files from a BATSRUS run (native .out or CCMC .cdf; support for output from other global magnetosphere models may be added), the magnetic field at given locations in the magnetosphere and ionosphere are computed by
+
+1. computing the surface integral over the boundary between the near--Earth and far--Earth region (denoted by $\oint_{\mathcal{I}}$),
+2. adding the Biot--Savart integral ($\int_{\mathcal{M}}\text{Biot--Savart}$) and the Coulomb integral ($\int_{\mathcal{M}}\text{Coulomb}$) over the far--Earth region, $\mathcal{M}$, to the a surface integral over the outer simulation surface ($\oint_{\mathcal{O}}$), and
+3. computing the Biot--Savart integral, $\int_{\mathcal{M}}\text{Biot--Savart}$, only,
+
+The resulting field from these methods is then added to the Biot--Savart integral of the currents in near--Earth region to give the total $\mathbf{B}$ on Earth's surface.
+
+# Use
+
+Requires Python 3. Last tested on Python 3.8.8.
+
+See the [runs](https://github.com/GaryQ-physics/magnetopost/tree/main/runs) directory for sample configuration scripts and output figures.
+
+## User
 
 ```
-$ cd /media/.../sblake/DIPTSUR2/
-$ ls
- derived/
- GM/
- Param.in
- run.info.py
- magnetosphere_files.txt
- ionosphere_files.txt
-
-$ cat run.info.py
-{
-  "model"                 : "SWMF",
-  "run_name"              : "DIPTSUR2",
-  "rCurrents"             : 1.8,
- }
-
-$ cat magnetosphere_files.txt
-2019 09 02 04 10 00 000 ./GM/IO2/3d__var_2_e20190902-041000-000.out
-2019 09 02 04 11 00 000 ./GM/IO2/3d__var_2_e20190902-041100-000.out
-2019 09 02 04 12 00 016 ./GM/IO2/3d__var_2_e20190902-041200-016.out
-2019 09 02 04 13 00 000 ./GM/IO2/3d__var_2_e20190902-041300-000.out
-2019 09 02 04 14 00 000 ./GM/IO2/3d__var_2_e20190902-041400-000.out
-2019 09 02 04 15 00 031 ./GM/IO2/3d__var_2_e20190902-041500-031.out
-2019 09 02 04 16 00 000 ./GM/IO2/3d__var_2_e20190902-041600-000.out
-2019 09 02 04 17 00 000 ./GM/IO2/3d__var_2_e20190902-041700-000.out
-...
-
-$ cat ionosphere_files.txt
-2019 09 02 04 10 00 000 ./IE/ionosphere/i_e20190902-041000-000.tec
-2019 09 02 04 11 00 000 ./IE/ionosphere/i_e20190902-041100-000.tec
-2019 09 02 04 12 00 016 ./IE/ionosphere/i_e20190902-041200-016.tec
-2019 09 02 04 13 00 000 ./IE/ionosphere/i_e20190902-041300-000.tec
-2019 09 02 04 14 00 000 ./IE/ionosphere/i_e20190902-041400-000.tec
-2019 09 02 04 15 00 031 ./IE/ionosphere/i_e20190902-041500-031.tec
-2019 09 02 04 16 00 000 ./IE/ionosphere/i_e20190902-041600-000.tec
-2019 09 02 04 17 00 000 ./IE/ionosphere/i_e20190902-041700-000.tec
-...
-
-
-$ python -c 'from magnetopost import postproc; postproc.job_ms(("colaba", "GMpoint1"), do_summary=True)'
-$ python -c 'from magnetopost import postproc; postproc.job_ie(("colaba",))'
-$ python -c 'from magnetopost import postproc; postproc.job(("colaba", "GMpoint1","GMpoint6"))'
+pip install 'git+https://github.com/GaryQ-physics/magnetopost.git' --upgrade
 ```
+
+## Developer
+
+```
+git clone https://github.com/GaryQ-physics/magnetopost.git
+cd magnetopost
+pip install --editable .
+```
+
+
+# Acknowledgments
+
+This work was in part supported by NASA Grant 80NSSC20K0589 "Physics-based modeling of the magnetosphere-ionosphere system under Carrington-scale solar driving: response modes, missing physics and uncertainty estimates", PI: Antti Pulkkinen and the subaward "Ground Magnetic Field Perturbations under Extreme Space Weather Conditions", PI: R.S. Weigel.
+

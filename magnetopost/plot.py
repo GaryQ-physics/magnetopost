@@ -55,7 +55,7 @@ def surf_point(info, surface_location, n_steps=None):
     #fig.suptitle(dir_run)
     #datetick('x')
 
-    outfile = f'{info["dir_run"]}/derived/figures/{info["run_name"]}-compare_with_swmf'
+    outfile = f'{info["dir_plots"]}/{info["run_name"]}-compare_with_swmf'
     write_plot(fig, outfile)
 
 
@@ -90,7 +90,7 @@ def surf_point(info, surface_location, n_steps=None):
     #fig.suptitle(runname)
     #datetick('x')
 
-    outfile = f'{info["dir_run"]}/derived/figures/{info["run_name"]}-compare_methods_123'
+    outfile = f'{info["dir_plots"]}/{info["run_name"]}-compare_methods_123'
     write_plot(fig, outfile)
 
 
@@ -131,8 +131,7 @@ def msph_point(info, surface_location, n_steps=None):
     fig.suptitle(info["run_name"])
     #datetick('x')
 
-    outfile = f'{info["dir_run"]}/derived/figures/{info["run_name"]}-compare_AB'
-    logging.info(f"Writing {outfile}-compareAB.[pdf,png]")
+    outfile = f'{info["dir_plots"]}/{info["run_name"]}-compare_AB'
     write_plot(fig, outfile)
 
 
@@ -147,6 +146,5 @@ def msph_point(info, surface_location, n_steps=None):
                                 label='difference')
     #datetick('x')
 
-    outfile = f'{info["dir_run"]}/derived/figures/{info["run_name"]}-consistency'
-    logging.info(f"Writing {outfile}-compareAB.[pdf,png]")
+    outfile = f'{info["dir_plots"]}/{info["run_name"]}-consistency'
     write_plot(fig, outfile)

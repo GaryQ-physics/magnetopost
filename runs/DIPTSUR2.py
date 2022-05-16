@@ -3,9 +3,7 @@ import magnetopost as mp
 # Prior to running this script, execute the following from the directory of
 # this script
 #
-# mkdir runs
-#  or
-# mkdir /Big/Disk/runs; ln -s /Big/Disk/runs
+# mkdir /Big/Disk/runs/DIPTSUR2; cd runs; ln -s /Big/Disk/runs/DIPTSUR2
 #
 # cd runs
 # wget -r -np -nH --cut-dirs=2 http://mag.gmu.edu/git-data/sblake/DIPTSUR2
@@ -18,15 +16,17 @@ info = {
         "run_name": "DIPTSUR2",
         "rCurrents": 1.8,
         "file_type": "out",
-        "dir_run": "/Users/weigel/git/magnetopost/runs/DIPTSUR2"
+        "dir_run": "/Users/weigel/git/magnetopost/runs/DIPTSUR2",
+        "dir_plots": "/Users/weigel/git/magnetopost/runs/DIPTSUR2.plots"
 }
 
-points_surf  = ["colaba"] # Locations to compute B. See config.py for list of known points.
-points_msph  = ["GMpoint1"] # Locations to compute B. See config.py for list of known points.
+# Locations to compute B. See config.py for list of known points.
+points_surf  = ["colaba"]
+points_msph  = ["GMpoint1"]
 
 compute = False
 plot    = True
-n_steps = None       # If None, process all files
+n_steps = None  # If None, process all files
 
 # Create output dirs if needed and list of files to process
 mp.util.setup(info)

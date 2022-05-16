@@ -15,7 +15,11 @@ def setup(info):
     dir_derived = os.path.join(info["dir_run"], "derived")
     dir_steps = os.path.join(dir_derived, "timeseries", "timesteps")
     dir_figures = os.path.join(dir_derived, "figures")
-    
+
+    if not os.path.exists(info["dir_plots"]):
+        os.mkdir(info["dir_plots"])
+        logging.info("Created " + info["dir_plots"])
+
     if not os.path.exists(dir_derived):
         os.mkdir(os.path.join(dir_derived))
         logging.info("Created " + dir_derived)
