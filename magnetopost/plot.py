@@ -21,45 +21,51 @@ def gen_rmse(diff):
 
 def surf_point(info, surface_location, n_steps=None):
 
-    #logging.info("rundir = {}".format(dir_run))
+
+    compare = False
 
     if info['file_type'] == "cdf":
-        dBMhd, dBFac, dBHal, dBPed = mp.extract_magnetometer_data.extract_from_swmf_ccmc_printout_file(info, surface_location, n_steps=n_steps)
+        try:
+            dBMhd, dBFac, dBHal, dBPed = mp.extract_magnetometer_data.extract_from_swmf_ccmc_printout_file(info, surface_location, n_steps=n_steps)
+            compare = True
+        except:
+            logging.info("SWMF/CCMF magnetometer grid data not found")
     if info['file_type'] == "out":
-        dBMhd, dBFac, dBHal, dBPed = mp.extract_magnetometer_data.extract_from_swmf_magnetometer_files(info, surface_location, n_steps=n_steps)
+        try:
+            dBMhd, dBFac, dBHal, dBPed = mp.extract_magnetometer_data.extract_from_swmf_magnetometer_files(info, surface_location, n_steps=n_steps)
+            compare = True
+        except:
+            logging.info("SWMF magnetometer grid data not found")
+
 
     bs_msph, bs_fac, bs_hall, bs_pedersen, cl_msph, helm_outer, helm_rCurrents_gapSM, probe = mp.extract_magnetometer_data.extract_from_magnetopost_files(info, surface_location, n_steps=n_steps)
 
     B_G  = bs_fac + bs_hall + bs_pedersen
     #B_G2 = dBFac + dBHal+ dBPed
 
-    fig, axs = plt.subplots(nrows=4, ncols=2, sharex=True, figsize=(12,12), dpi=100)
+    if compare is True:
+        fig, axs = plt.subplots(nrows=4, ncols=2, sharex=True, figsize=(12,12), dpi=100)
 
-    def foo(i, swmf, ours, title):
-        norm(swmf).plot(ax=axs[i,0], label='SWMF magnetometer files', color='Orange')
-        norm(ours).plot(ax=axs[i,0], label='Our calculation', color='Blue')
-        diff = norm(ours) - norm(swmf)
-        rmse = gen_rmse(diff)
-        diff.plot(ax=axs[i,1], label=f'Difference (RMSE={rmse:.1f})')
+        def foo(i, swmf, ours, title):
+            norm(swmf).plot(ax=axs[i,0], label='SWMF magnetometer files', color='Orange')
+            norm(ours).plot(ax=axs[i,0], label='Our calculation', color='Blue')
+            diff = norm(ours) - norm(swmf)
+            rmse = gen_rmse(diff)
+            diff.plot(ax=axs[i,1], label=f'Difference (RMSE={rmse:.1f})')
+    
+            axs[i,0].set_title(title)
+            axs[i,0].legend(title_fontsize=1)
+            axs[i,1].legend(title_fontsize=1)
+            axs[i,0].set_ylabel('nT')
 
-        axs[i,0].set_title(title)
-        axs[i,0].legend(title_fontsize=1)
-        axs[i,1].legend(title_fontsize=1)
-        axs[i,0].set_ylabel('nT')
+        foo(0, dBMhd, bs_msph    , 'dBMhd')
+        foo(1, dBFac, bs_fac     , 'dBFac')
+        foo(2, dBHal, bs_hall    , 'dBHal')
+        foo(3, dBPed, bs_pedersen, 'dBPed')
 
-    foo(0, dBMhd, bs_msph    , 'dBMhd')
-    foo(1, dBFac, bs_fac     , 'dBFac')
-    foo(2, dBHal, bs_hall    , 'dBHal')
-    foo(3, dBPed, bs_pedersen, 'dBPed')
+        outfile = f'{info["dir_plots"]}/{info["run_name"]}-compare_with_swmf'
+        write_plot(fig, outfile)
 
-    #fig.suptitle(dir_run)
-    #datetick('x')
-
-    outfile = f'{info["dir_plots"]}/{info["run_name"]}-compare_with_swmf'
-    write_plot(fig, outfile)
-
-
-    fig.clf(); del fig
 
     fig, axs = plt.subplots(nrows=5, ncols=1, sharex=True, figsize=(12,12), dpi=100)
 

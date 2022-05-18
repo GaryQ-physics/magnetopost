@@ -18,22 +18,29 @@ info = {
         "run_name": "SWPC_SWMF_052811_2",
         "rCurrents": 4.0,
         "file_type": "cdf",
-        "dir_run": "/Users/weigel/git/magnetopost/runs/SWPC_SWMF_052811_2"
+        "dir_run": "/Users/weigel/git/magnetopost/runs/SWPC_SWMF_052811_2",
+        "dir_plots": "/Users/weigel/git/magnetopost/runs/SWPC_SWMF_052811_2.plots"
 }
 
-points = ["YKC"]     # Locations to compute B. See config.py for list of known points.
+# Locations to compute B. See config.py for list of known points.
+points_surf  = ["YKC"]
+points_msph  = ["GMpoint1"]
+
 compute = True
 plot    = True
-n_steps = 6         # If None, process all files
+n_steps = None  # If None, process all files
 
 # Create output dirs if needed and list of files to process
 mp.util.setup(info)
 
 if compute:
-    mp.postproc.job_ie(info, points, n_steps=n_steps)
-    mp.postproc.job_ms(info, points, n_steps=n_steps)
+    #mp.postproc.job_ie(info, points_surf, n_steps=n_steps)
+    mp.postproc.job_ms(info, points_msph, n_steps=n_steps)
 
 if plot:
-    for point in points:
-        mp.plot.surf_point(info, point, n_steps=n_steps)
-        mp.plot.msph_point(info, point, n_steps=n_steps)
+    if points_surf is not None:
+        for point in points_surf:
+            mp.plot.surf_point(info, point, n_steps=n_steps)
+    if points_msph is not None:
+        for point in points_msph:
+            mp.plot.msph_point(info, point, n_steps=n_steps)

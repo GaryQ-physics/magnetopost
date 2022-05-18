@@ -8,7 +8,14 @@ import magnetopost as mp
 # cd runs
 # wget -r -np -nH --cut-dirs=2 http://mag.gmu.edu/git-data/sblake/DIPTSUR2
 #
-# Then modify dir_run in the following dictionary
+# Then modify dir_run in the info dictionary below
+#
+# Optional:
+#   OS-X
+#       find . -name "index.*" | xargs =i rm -f {}
+#   Linux
+#      find . -name "index.*" | xargs rm -f {}
+#
 
 # TODO: Get rCurrents from file
 info = {

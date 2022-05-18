@@ -1,9 +1,10 @@
 from setuptools import setup, find_packages
 
+# Numba typically requires an older version of numpy. So put first.
 install_requires = [
-                        "numpy",
-                        "pandas",
                         "numba",
+                        "pandas",
+                        "numpy",
                         "joblib",
                         "matplotlib",
                         "hxform @ git+https://github.com/rweigel/hxform.git#egg=hxform",
