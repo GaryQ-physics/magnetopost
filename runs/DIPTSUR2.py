@@ -30,6 +30,7 @@ info = {
 # Locations to compute B. See config.py for list of known points.
 points_surf  = ["colaba"]
 points_msph  = ["GMpoint1"]
+points_all   = points_surf + points_msph
 
 compute = False
 plot    = True
@@ -39,8 +40,8 @@ n_steps = None  # If None, process all files
 mp.util.setup(info)
 
 if compute:
-    mp.postproc.job_ie(info, points_surf, n_steps=n_steps)
-    mp.postproc.job_ms(info, points_msph, n_steps=n_steps)
+    mp.postproc.job_ie(info, points_all, n_steps=n_steps)
+    mp.postproc.job_ms(info, points_all, n_steps=n_steps)
 
 if plot:
     for point in points_surf:
