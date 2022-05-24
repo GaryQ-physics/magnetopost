@@ -7,7 +7,9 @@ from magnetopost import util
 
 @njit
 def _jit_B_biotsavart(ms_slice, x0, rcut, include):
-    integral = np.zeros((3,),dtype=np.float32)
+    #DT change float32 to float64
+    #integral = np.zeros((3,),dtype=np.float32)
+    integral = np.zeros((3,),dtype=np.float64)
 
     for ind in range(ms_slice.data_arr.shape[0]):
         measure = ms_slice.data_arr[ind, ms_slice.varidx['measure']]
@@ -37,7 +39,9 @@ def _jit_B_biotsavart(ms_slice, x0, rcut, include):
         if r < 1e-5:
             continue
 
-        integrand = np.empty((3,),dtype=np.float32)
+        #DT change float32 to float64
+        #integrand = np.empty((3,),dtype=np.float32)
+        integrand = np.empty((3,),dtype=np.float64)
         integrand[2] = curl_B1_x*r_y - curl_B1_y*r_x
         integrand[0] = curl_B1_y*r_z - curl_B1_z*r_y
         integrand[1] = curl_B1_z*r_x - curl_B1_x*r_z
@@ -53,7 +57,9 @@ def _jit_B_biotsavart(ms_slice, x0, rcut, include):
 
 @njit
 def _jit_B_coulomb(ms_slice, x0, rcut, include):
-    integral = np.zeros((3,),dtype=np.float32)
+    #DT change float32 to float64
+    #integral = np.zeros((3,),dtype=np.float32)
+    integral = np.zeros((3,),dtype=np.float64)
 
     for ind in range(ms_slice.data_arr.shape[0]):
         measure = ms_slice.data_arr[ind, ms_slice.varidx['measure']]
@@ -81,7 +87,9 @@ def _jit_B_coulomb(ms_slice, x0, rcut, include):
         if r < 1e-5:
             continue
 
-        integrand = np.empty((3,),dtype=np.float32)
+        #DT change float32 to float64
+        #integrand = np.empty((3,),dtype=np.float32)
+        integrand = np.empty((3,),dtype=np.float64)
         integrand[0] = div_B1*r_x
         integrand[1] = div_B1*r_y
         integrand[2] = div_B1*r_z

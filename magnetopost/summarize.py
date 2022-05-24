@@ -9,8 +9,9 @@ from magnetopost import util
 from magnetopost.units_and_constants import phys
 from magnetopost.gap_integrals import get_dipole_field
 
-unitmu0 = np.float32( phys['mu0']*(phys['muA']/phys['m']**2) )#!!!!
-_count = 0
+#DT change float32 to float64
+#unitmu0 = np.float32( phys['mu0']*(phys['muA']/phys['m']**2) )#!!!!
+unitmu0 = np.float64( phys['mu0']*(phys['muA']/phys['m']**2) )#!!!!_count = 0
 _mean  = 1
 _sndMo = 2
 _std   = 3
@@ -45,7 +46,9 @@ def _jit_stats_summary(ms_slice, rcut):
     nVarTot = len(varidx)
     #print(varidx)
 
-    summary_arr = np.empty((nVarTot,6), dtype=np.float32)
+    #DT change float32 to float64
+    #summary_arr = np.empty((nVarTot,6), dtype=np.float32)
+    summary_arr = np.empty((nVarTot,6), dtype=np.float64)
     summary_arr[:,_count] = 0.
     summary_arr[:,_mean ] = 0.
     summary_arr[:,_sndMo] = 0.
@@ -53,7 +56,9 @@ def _jit_stats_summary(ms_slice, rcut):
     summary_arr[:,_min  ] = np.inf
     summary_arr[:,_max  ] = -np.inf
 
-    store = np.empty((nVarTot,), dtype=np.float32)
+    #DT change float32 to float64
+    #store = np.empty((nVarTot,), dtype=np.float32)
+    store = np.empty((nVarTot,), dtype=np.float64)
     for ind in range(darr.shape[0]):
         store[:]=np.nan
 
