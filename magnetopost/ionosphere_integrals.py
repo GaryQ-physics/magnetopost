@@ -74,7 +74,7 @@ def bs_pedersen(info, time, ie_slice, obs_point):
     integral = scalefact*_integral_bs(X,Y,Z,x0,KX,KY,KZ,Measure)
     integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
 
-    outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
+    outname = f'{info["dir_derived"]}/timeseries/timesteps/' \
         + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
     np.save(outname, integral)
     logging.info(f"Wrote {outname}")
@@ -101,7 +101,7 @@ def bs_hall(info, time, ie_slice, obs_point):
     integral = scalefact*_integral_bs(XYZ[:,0],XYZ[:,1],XYZ[:,2],x0,K[:,0],K[:,1],K[:,2],Measure)
     integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
 
-    outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
+    outname = f'{info["dir_derived"]}/timeseries/timesteps/' \
         + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
     np.save(outname, integral)
     logging.info(f"Wrote {outname}")

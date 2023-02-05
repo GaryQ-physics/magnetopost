@@ -1,0 +1,175 @@
+import numpy as np
+import matplotlib.pyplot as plt
+plt.rcParams["font.family"] = "Times New Roman"
+
+import magnetopost as mp
+
+from . datetick import datetick
+
+def write_plot(fig, outfile):
+    mp.logger.info("Writing {}.[svg,pdf,png]".format(outfile))
+    fig.savefig(outfile + '.svg',bbox_inches='tight')
+    fig.savefig(outfile + '.pdf',bbox_inches='tight')
+    fig.savefig(outfile + '.png',bbox_inches='tight')
+
+
+def norm(df):
+    return np.sqrt(df['north']**2+df['east']**2+df['down']**2)
+
+
+def gen_rmse(diff):
+    return np.sqrt( np.sum(diff**2)/diff.size ) #!!! NANS
+
+
+def surf_point(info, surface_locations, n_steps=None):
+
+    compare = False
+
+    if isinstance(surface_locations, list):
+        for surface_location in surface_locations:
+            print(surface_location)
+            surf_point(info, surface_location, n_steps=n_steps)
+        return
+    else:
+        surface_location = surface_locations
+
+    if 'deltaB_files' in info and surface_location in info['deltaB_files']:
+        if info['file_type'] == "cdf":
+            try:
+                dBMhd, dBFac, dBHal, dBPed = mp.extract_magnetometer_data.extract_from_swmf_ccmc_printout_file(info, surface_location, n_steps=n_steps)
+                mp.logger.info("Found SWMF/CCMC magnetometer file for " + surface_location)
+                compare = True
+                label = 'CCMC'
+            except:
+                mp.logger.info("Did not find SWMF/CCMF magnetometer file for " + surface_location)
+        if info['file_type'] == "out":
+            try:
+                dBMhd, dBFac, dBHal, dBPed = mp.extract_magnetometer_data.extract_from_swmf_magnetometer_files(info, surface_location, n_steps=n_steps)
+                mp.logger.info("Found SWMF magnetometer grid data file")
+                label = 'SWMF'
+                compare = True
+            except:
+                mp.logger.info("SWMF magnetometer grid data file not found")
+
+
+    bs_msph, bs_fac, bs_hall, bs_pedersen, cl_msph, helm_outer, helm_rCurrents_gapSM, probe = mp.extract_magnetometer_data.extract_from_magnetopost_files(info, surface_location, n_steps=n_steps)
+
+    B_G  = bs_fac + bs_hall + bs_pedersen
+    #B_G2 = dBFac + dBHal+ dBPed
+
+    fig, axs = plt.subplots(nrows=5, ncols=1, sharex=True, figsize=(8.5, 11), dpi=300)
+
+    method_3 = B_G + bs_msph
+    method_2 = B_G + bs_msph + cl_msph + helm_outer
+    method_1 = B_G + helm_rCurrents_gapSM
+
+    norm(method_1).plot(ax=axs[0], label='Method 1.', color='Blue', x_compat=True)
+    norm(method_2).plot(ax=axs[0], label='Method 2.', color='Orange', x_compat=True)
+
+    diff = norm(method_1)-norm(method_2)
+    rmse = gen_rmse(diff)
+    diff.plot(ax=axs[1], label=f'(Method 1.) - (Method 2.) (RMSE={rmse:.1f})', x_compat=True)
+
+    norm(method_1).plot(ax=axs[2], label='Method 1.', color='Blue', x_compat=True)
+    norm(method_3).plot(ax=axs[2], label='Method 3.', color='Orange', x_compat=True)
+
+    diff = norm(method_1)-norm(method_3)
+    rmse = gen_rmse(diff)
+    diff.plot(ax=axs[3], label=f'(Method 1.) - (Method 3.) (RMSE={rmse:.1f})', x_compat=True)
+
+    norm(cl_msph).plot(ax=axs[4], label=r'$\int_{\mathcal{M}}$Coulomb', color='Orange', x_compat=True)
+    norm(helm_outer).plot(ax=axs[4], label=r'$\oint_{\mathcal{O}}$', color='Green', x_compat=True)
+    norm(bs_msph).plot(ax=axs[4], label=r'$\int_{\mathcal{M}}$Biot_Savart',  color='Blue', x_compat=True)
+
+    [ax.legend() for ax in axs]
+    [ax.set_ylabel('nT') for ax in axs]
+    fig.suptitle(info['run_name'] + " at " + surface_location, y=0.92)
+
+    datetick('x', axes=axs[4])
+
+    outfile = f'{info["dir_plots"]}/{info["run_name"]}-compare_methods_123'
+    write_plot(fig, outfile)
+
+    if compare is True:
+        fig, axs = plt.subplots(nrows=4, ncols=2, sharex=True, figsize=(8,10), dpi=300)
+
+        def foo(i, swmf, ours, title):
+            norm(swmf).plot(ax=axs[i,0], label=label, color='Orange', x_compat=True)
+            norm(ours).plot(ax=axs[i,0], label='Our calc', color='Blue', x_compat=True)
+            diff = norm(ours) - norm(swmf)
+            rmse = gen_rmse(diff)
+            diff.plot(ax=axs[i,1], label=f'Difference (RMSE={rmse:.1f})', x_compat=True)
+
+            axs[i,0].set_title(title, fontsize=10, va='center')
+            axs[i,0].legend(title_fontsize=1)
+            axs[i,1].legend(title_fontsize=1)
+            axs[i,0].set_ylabel('nT')
+
+
+        foo(0, dBMhd, bs_msph    , 'dB MHD')
+        foo(1, dBFac, bs_fac     , 'dB FAC')
+        foo(2, dBHal, bs_hall    , 'dB Hall')
+        foo(3, dBPed, bs_pedersen, 'dB Pederson')
+
+        datetick('x', axes=axs[3,0])
+        datetick('x', axes=axs[3,1])
+
+        fig.suptitle(info['run_name'] + " at " + surface_location, y=0.92)
+
+        outfile = f'{info["dir_plots"]}/{info["run_name"]}-compare_with_swmf'
+        write_plot(fig, outfile)
+
+
+def msph_point(info, surface_locations, n_steps=None):
+
+    if isinstance(surface_locations, list):
+        for surface_location in surface_locations:
+            msph_point(info, surface_location, n_steps=n_steps)
+        return
+    else:
+        surface_location = surface_locations
+
+    bs_msph, bs_fac, bs_hall, bs_pedersen,  cl_msph, helm_outer, helm_rCurrents_gapSM, probe = mp.extract_magnetometer_data.extract_from_magnetopost_files(info, surface_location, n_steps=n_steps)
+    B_G  = bs_fac + bs_hall + bs_pedersen
+    #B_G2 = dBFac + dBHal+ dBPed
+
+    fig, axs = plt.subplots(nrows=4, ncols=1, sharex=True, figsize=(8.5,11), dpi=300)
+
+    method_A  = bs_msph + cl_msph + helm_outer - helm_rCurrents_gapSM
+    method_B  = bs_msph + cl_msph + helm_outer + B_G
+    #method_B2 = bs_msph + cl_msph + helm_outer + B_G2
+
+    norm(method_A).plot(ax=axs[0], label='Method A.', color='Blue', x_compat=True)
+    norm(probe).plot(ax=axs[0], label=r'$\mathbf{B}$', color='Orange', x_compat=True)
+
+    diff = norm(method_A)-norm(probe)
+    rmse = gen_rmse(diff)
+    diff.plot(ax=axs[1], label=r'(Method A.) - $\mathbf{B}$' + f' (RMSE={rmse:.1f})', x_compat=True)
+
+    norm(method_B).plot(ax=axs[2],  label='Method B.', color='Blue', x_compat=True)
+    norm(probe).plot(ax=axs[2], label=r'$\mathbf{B}$', color='Orange', x_compat=True)
+
+    diff = norm(method_B)-norm(probe)
+    rmse = gen_rmse(diff)
+    diff.plot(ax=axs[3], label=r'(Method B.) - $\mathbf{B}$'+f' (RMSE={rmse:.1f})', x_compat=True)
+
+    [ax.legend() for ax in axs]
+    [ax.set_ylabel('nT') for ax in axs]
+    fig.suptitle(info['run_name'] + " at " + surface_location, y=0.92)
+    datetick('x', axes=axs[3])
+
+    outfile = f'{info["dir_plots"]}/{info["run_name"]}-compare_AB'
+    write_plot(fig, outfile)
+
+    fig, axs = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(8.5, 11), dpi=300)
+    norm(helm_rCurrents_gapSM).plot(ax=axs[0], label=r'$\oint_{\mathcal{I}}$',  color='Blue', x_compat=True)
+    norm(B_G).plot(ax=axs[0], label=r'$\mathbf{B}_{\mathcal{G}}$', color='Orange', x_compat=True)
+
+    diff = norm(helm_rCurrents_gapSM) - norm(B_G)
+    rmse = gen_rmse(diff)
+    diff.plot(ax=axs[1], label='difference', x_compat=True)
+    fig.suptitle(info['run_name'] + " at " + surface_location, y=0.92)
+    datetick('x', axes=axs[1])
+
+    outfile = f'{info["dir_plots"]}/{info["run_name"]}-consistency'
+    write_plot(fig, outfile)

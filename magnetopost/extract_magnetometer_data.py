@@ -1,7 +1,6 @@
 import os
 import sys
 import re
-import logging
 import numpy as np
 import pandas as pd
 
@@ -9,9 +8,7 @@ from datetime import datetime
 
 import magnetopost.util as mputil
 
-#from datetick import datetick
-def datetick(arg):
-    pass
+import magnetopost as mp
 
 OVERWRITE_CACHE=False
 rootdir = '/home/gary/media_sunspot'
@@ -79,16 +76,16 @@ def extract_from_swmf_magnetometer_files(info, surface_location, n_steps=None):
     so someone probably screwed up the linspace and meant to use (176,)
     """
 
-    logging.info("Extracting point dB information from mag_grid files in {}".format(info["dir_run"]))
+    mp.logger.info("Extracting point dB information from mag_grid files in {}".format(info["dir_run"]))
 
-    cachepath = f'{info["dir_run"]}/derived/extract_from_swmf_magnetometer_files'
+    cachepath = f'{info["dir_derived"]}/extract_from_swmf_magnetometer_files'
     if not OVERWRITE_CACHE:
         try:
             dBMhd = pd.read_pickle(f'{cachepath}/dBMhd-{surface_location}.pkl')
             dBFac = pd.read_pickle(f'{cachepath}/dBFac-{surface_location}.pkl')
             dBHal = pd.read_pickle(f'{cachepath}/dBHal-{surface_location}.pkl')
             dBPed = pd.read_pickle(f'{cachepath}/dBPed-{surface_location}.pkl')
-            logging.info('Using cached calculations found in {}'.format(cachepath))
+            mp.logger.info('Using cached calculations found in {}'.format(cachepath))
             return dBMhd, dBFac, dBHal, dBPed
         except FileNotFoundError:
             pass
@@ -109,7 +106,7 @@ def extract_from_swmf_magnetometer_files(info, surface_location, n_steps=None):
         filename = cdfname.replace('.cdf','')
         filename = re.sub('3d__var_._','mag_grid_', f'{filename[:-8]}.out')
 
-        logging.info("Reading {}".format(filename))
+        mp.logger.info("Reading {}".format(filename))
         with open(filename, 'r') as f:
             first = f.readline()
             second = f.readline()
@@ -149,7 +146,7 @@ def extract_from_swmf_magnetometer_files(info, surface_location, n_steps=None):
 
     os.makedirs(cachepath, exist_ok=True)
 
-    logging.info("Saving parsed content of dB files to {cachepath}")
+    mp.logger.info("Saving parsed content of dB files to {cachepath}")
     dBMhd.to_pickle(f'{cachepath}/dBMhd-{surface_location}.pkl')
     dBFac.to_pickle(f'{cachepath}/dBFac-{surface_location}.pkl')
     dBHal.to_pickle(f'{cachepath}/dBHal-{surface_location}.pkl')
@@ -161,16 +158,16 @@ def extract_from_swmf_magnetometer_files(info, surface_location, n_steps=None):
 def extract_from_swmf_ccmc_printout_file(info, surface_location, n_steps=None):
 
     year = list(info['files']['magnetosphere'].keys())[0][0]
-    filename = f'{info["dir_run"]}/derived/{year}_{surface_location}_pointdata.txt'
-
-    logging.info("Reading point dB information from " + filename)
-
+    filename = info['deltaB_files'][surface_location]
+    mp.logger.info("Reading point dB information from " + filename)
     headers, arr = read_ccmc_printout(filename)
     assert( headers[10:] ==('sumBn', 'sumBe', 'sumBd',
                              'dBn', 'dBe', 'dBd',
                             'facdBn', 'facdBe', 'facdBd',
                             'JhdBn', 'JhdBe', 'JhdBd',
                             'JpBn', 'JpBe', 'JpBd') )
+
+    mp.logger.info("Read point dB information from " + filename)
 
     if n_steps is not None:
         arr = arr[0:n_steps,:]
@@ -188,7 +185,7 @@ def extract_from_swmf_ccmc_printout_file(info, surface_location, n_steps=None):
 
 def extract_from_CalcDeltaB_file(filename):
 
-    logging.info("Reading dB information from " + filename)
+    mp.logger.info("Reading dB information from " + filename)
 
     headers, arr = read_ccmc_printout(filename)
     assert( headers[9:] ==('B_north', 'B_east', 'B_down',
@@ -220,10 +217,9 @@ def extract_from_magnetopost_files(info, surface_location, n_steps=None):
 
     def get(ftag, dtimes):
         df = pd.DataFrame()
-        infile = f'{info["dir_run"]}/derived/timeseries/{ftag}-{surface_location}.npy'
-        logging.info(f"Reading {infile}")
+        infile = f'{info["dir_derived"]}/timeseries/{ftag}-{surface_location}.npy'
+        mp.logger.info(f"Reading {infile}")
         dB = np.load(infile)
-
         df['north'] = pd.Series(data=dB[:,0], index=dtimes)
         df['east']  = pd.Series(data=dB[:,1], index=dtimes)
         df['down']  = pd.Series(data=dB[:,2], index=dtimes)
@@ -242,12 +238,12 @@ def extract_from_magnetopost_files(info, surface_location, n_steps=None):
 
     probe = get('probe', msph_dtimes)
 
-    return bs_msph, bs_fac, bs_hall, bs_pedersen, cl_msph,helm_outer, helm_rCurrents_gapSM, probe
+    return bs_msph, bs_fac, bs_hall, bs_pedersen, cl_msph, helm_outer, helm_rCurrents_gapSM, probe
 
 
 def extract_all():
     rundir = '{rootdir}/DIPTSUR2/'
-    surface_location = 'colaba'
+    surface_location = 'Colaba'
 
     dBMhd, dBFac, dBHal, dBPed = extract_from_swmf_magnetometer_files(rundir, surface_location)
     B_mag, B_fac, B_ionoSigH, B_ionoSigP = extract_from_CalcDeltaB_file('pointdata_751815008468.txt')
@@ -255,7 +251,7 @@ def extract_all():
 
 
 #def main():
-    #surface_point('DIPTSUR2','colaba')
+    #surface_point('DIPTSUR2','Colaba')
     #msph_point('DIPTSUR2','GMpoint1')
     #surface_point('SWPC_SWMF_052811_2','YKC')
     #msph_point('SWPC_SWMF_052811_2','GMpoint6')

@@ -1,8 +1,8 @@
-import logging
+import magnetopost as mp
 from magnetopost import models
 from magnetopost.summarize import slice_summary, stitch_summary
 from magnetopost.gap_integrals import slice_bs_fac, slice_helm_rCurrents, stitch_helm_rCurrents
-from magnetopost.magnetosphere_integrals import slice_bs_msph, stitch_bs_msph, slice_cl_msph, stitch_cl_msph
+from magnetopost.magnetosphere_integrals import slice_bs_msph, slice_cl_msph
 from magnetopost.probe import slice_probe, stitch_probe
 
 
@@ -15,12 +15,12 @@ def cat(info, times, points, function_str):
 
         integrals = []
         for time in times:
-            outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
+            outname = f'{info["dir_derived"]}/timeseries/timesteps/' \
                 + f'{function_str}-{point}-{util.Tstr(time)}.npy'
 
             integrals.append(np.load(outname))
 
-        outfile = f'{info["dir_run"]}/derived/timeseries/' \
+        outfile = f'{info["dir_derived"]}/timeseries/' \
                 + f'{function_str}-{point}.npy'
         print(f"Writing {outfile}")
         np.save(outfile, np.array(integrals))
@@ -37,33 +37,33 @@ def job_ie(info, points, n_steps=None, stitch_only=False, parallel=True):
 
     def wrap(time):
 
-        logging.info("Working on ionosphere at time = {}".format(time))
+        mp.logger.info("Working on ionosphere at time = {}".format(time))
 
         ie_slice = models.get_iono_slice(info, time)
         for point in points:
             bs_pedersen(info, time, ie_slice, point)
             bs_hall(info, time, ie_slice, point)
 
-    if parallel:
-        from joblib import Parallel, delayed
-        import multiprocessing
-        num_cores = multiprocessing.cpu_count()
-        num_cores = min(num_cores, len(times), 20)
-        logging.info(f'Parallel processing {len(times)} ionosphere timesteps using {num_cores} cores')
-        Parallel(n_jobs=num_cores)(delayed(wrap)(time) for time in times)
-    else:
-        logging.info(f'Serial processing {len(times)} ionosphere timesteps')
-        for time in times:
-            wrap(time)
+    if stitch_only == False:
+        if parallel:
+            from joblib import Parallel, delayed
+            import multiprocessing
+            num_cores = multiprocessing.cpu_count()
+            num_cores = min(num_cores, len(times), 20)
+            mp.logger.info(f'Parallel processing {len(times)} ionosphere timesteps using {num_cores} cores')
+            Parallel(n_jobs=num_cores)(delayed(wrap)(time) for time in times)
+        else:
+            mp.logger.info(f'Serial processing {len(times)} ionosphere timesteps')
+            for time in times:
+                wrap(time)
+        mp.logger.info("Finished ionosphere processing")
 
-    logging.info("Finished ionosphere processing")
-
+    mp.logger.info("Combining ionosphere timestep data.")
     cat(info, times, points, 'bs_pedersen')
     cat(info, times, points, 'bs_hall')
 
 
-
-def job_ms(info, points, n_steps=None, stitch_only=False, do_summary=False):
+def job_ms(info, points, n_steps=None, stitch_only=False, parallel=True, do_summary=False):
 
     from magnetopost.boundary_integrals import helm_outer
 
@@ -73,11 +73,12 @@ def job_ms(info, points, n_steps=None, stitch_only=False, do_summary=False):
         times = times[0:n_steps]
 
     def wrap(time):
-        logging.info("Working on magnetosphere at time = {}".format(time))
-        logging.info("Reading data for = {}".format(time))
+
+        mp.logger.info("Working on magnetosphere at time = {}".format(time))
+        mp.logger.info("Reading data for = {}".format(time))
         ms_slice = models.get_ms_slice_class(info, time)
 
-        logging.info("Computing integrals for = {}".format(time))
+        mp.logger.info("Computing integrals for = {}".format(time))
         for point in points:
             slice_bs_fac(info, time, ms_slice, point)
             slice_bs_msph(info, time, ms_slice, point)
@@ -90,28 +91,30 @@ def job_ms(info, points, n_steps=None, stitch_only=False, do_summary=False):
         if do_summary:
             slice_summary(info, time, ms_slice)
 
-    if not stitch_only:
-        if False:
-            for time in times:
-                wrap(time)
-        else:
+    if stitch_only == False:
+        if parallel:
             from joblib import Parallel, delayed
             import multiprocessing
             num_cores = multiprocessing.cpu_count()
             num_cores = min(num_cores, len(times), 20)
-            logging.info(f'Parallel processing {len(times)} magnetosphere timesteps using {num_cores} cores')
+            mp.logger.info(f'Parallel processing {len(times)} magnetosphere timesteps using {num_cores} cores')
             Parallel(n_jobs=num_cores)(delayed(wrap)(time) for time in times)
+        else:
+            mp.logger.info(f'Serial processing {len(times)} magnetosphere timesteps')
+            for time in times:
+                wrap(time)
 
-    logging.info("Finished magnetosphere processing")
+        mp.logger.info("Finished magnetosphere processing")
+
+    mp.logger.info("Combining magnetosphere timestep data.")
 
     cat(info, times, points, 'helm_outer')
     cat(info, times, points, 'bs_fac')
+    cat(info, times, points, 'bs_msph')
+    cat(info, times, points, 'cl_msph')
 
+    # TODO: Use cat.
     for point in points:
-        #stitch_bs_fac(info, times, point)
-        stitch_bs_msph(info, times, point)
-        stitch_cl_msph(info, times, point)
-        #stitch_helm_outer(info, times, point)
         stitch_helm_rCurrents(info, times, point)
         stitch_helm_rCurrents(info, times, point, gap_csys='GSM')
         stitch_probe(info, times, point)

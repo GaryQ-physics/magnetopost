@@ -186,7 +186,7 @@ def slice_bs_fac(info, time, ms_slice, obs_point, nTheta=181, nPhi=180, nR=30, g
     dB_fac = (phys['mu0']*phys['muA']/phys['m']**2) * dB_fac
     dB_fac = hx.get_NED_vector_components(dB_fac.reshape(1,3), x0.reshape(1,3)).ravel()
 
-    outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
+    outname = f'{info["dir_derived"]}/timeseries/timesteps/' \
         + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
 
     np.save(outname, dB_fac)
@@ -207,7 +207,7 @@ def slice_helm_rCurrents(info, time, ms_slice, obs_point, nTheta=181,nPhi=180, g
     x0 = hx.transform(x0, time, gap_csys, 'SM')
     dB_mhd_SurfaceIntegral = hx.get_NED_vector_components(dB_mhd_SurfaceIntegral.reshape(1,3), x0.reshape(1,3)).ravel()
 
-    outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
+    outname = f'{info["dir_derived"]}/timeseries/timesteps/' \
         + f'{funcnameStr}_gap{gap_csys}-{obs_point}-{util.Tstr(time)}.npy'
 
     np.save(outname, dB_mhd_SurfaceIntegral)
@@ -221,12 +221,12 @@ def stitch_helm_rCurrents(info, times, obs_point, gap_csys='SM'):
 
     integrals = []
     for time in times:
-        outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
+        outname = f'{info["dir_derived"]}/timeseries/timesteps/' \
             + f'{funcnameStr}_gap{gap_csys}-{obs_point}-{util.Tstr(time)}.npy'
 
         integrals.append(np.load(outname))
 
-    outname = f'{info["dir_run"]}/derived/timeseries/' \
+    outname = f'{info["dir_derived"]}/timeseries/' \
             + f'{funcnameStr}_gap{gap_csys}-{obs_point}.npy'
     arr = np.array(integrals)
     np.save(outname, arr)

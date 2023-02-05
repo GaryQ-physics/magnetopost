@@ -34,6 +34,9 @@ def _jit_B_biotsavart(ms_slice, x0, rcut, include):
         r_y = x0[1] - y
         r_z = x0[2] - z
         r = np.sqrt(r_x**2 + r_y**2 + r_z**2)
+
+        # TODO: Find analytic formula for uniformly distributed current in cube
+        # and use it here.
         if r < 1e-5:
             continue
 
@@ -120,7 +123,7 @@ def slice_bs_msph(info, time, ms_slice, obs_point, insubset=None, subsetStr=None
     x0 = hx.GSMtoSM(x0, time, ctype_in='car', ctype_out='car')
     integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
 
-    outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
+    outname = f'{info["dir_derived"]}/timeseries/timesteps/' \
             + f'{funcnameStr}{subsetStr}-{obs_point}-{util.Tstr(time)}.npy'
     np.save(outname, integral)
     logging.info('Wrote {}'.format(outname))
@@ -141,41 +144,8 @@ def slice_cl_msph(info, time, ms_slice, obs_point):
     x0 = hx.GSMtoSM(x0, time, ctype_in='car', ctype_out='car')
     integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
 
-    print(integral)
-    outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
+    outname = f'{info["dir_derived"]}/timeseries/timesteps/' \
             + f'{funcnameStr}{includeStr}-{obs_point}-{util.Tstr(time)}.npy'
     np.save(outname, integral)
     logging.info(f'Wrote {outname}')
 
-
-def stitch_bs_msph(info, times, obs_point):
-    funcnameStr = 'bs_msph'
-
-    integrals = []
-    for time in times:
-        outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
-            + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
-
-        integrals.append(np.load(outname))
-
-    outname = f'{info["dir_run"]}/derived/timeseries/' \
-             + f'{funcnameStr}-{obs_point}.npy'
-    arr = np.array(integrals)
-    np.save(outname, arr)
-    logging.info(f'Wrote {outname}')
-
-
-def stitch_cl_msph(info, times, obs_point):
-    funcnameStr = 'cl_msph'
-
-    integrals = []
-    for time in times:
-        outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
-                + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
-        integrals.append(np.load(outname))
-
-    outname = f'{info["dir_run"]}/derived/timeseries/' \
-            + f'{funcnameStr}-{obs_point}.npy'
-    arr = np.array(integrals)
-    np.save(outname, arr)
-    logging.info(f'Wrote {outname}')

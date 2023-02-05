@@ -82,7 +82,7 @@ def helm_outer(info, time, ms_slice, obs_point):
     x0 = hx.GSMtoSM(x0, time, ctype_in='car', ctype_out='car')
     integral = hx.get_NED_vector_components(integral.reshape(1,3), x0.reshape(1,3)).ravel()
 
-    outname = f'{info["dir_run"]}/derived/timeseries/timesteps/' \
+    outname = f'{info["dir_derived"]}/timeseries/timesteps/' \
         + f'{funcnameStr}-{obs_point}-{util.Tstr(time)}.npy'
     np.save(outname, integral)
     logging.info(f"Writing {outname}")

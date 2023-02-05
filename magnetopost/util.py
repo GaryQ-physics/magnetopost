@@ -1,36 +1,28 @@
 import os
-import logging
 import numpy as np
-
-from magnetopost.config import defined_magnetometers
-from hxform import hxform as hx
 
 def Tstr(time, length=6):
     return '%.4d%.2d%.2dT%.2d%.2d%.2d'%(time[:6])
 
 
 def setup(info):
+    import magnetopost as mp
+
     assert os.path.exists(info["dir_run"]), "dir_run = " + info["dir_run"] + " not found"
 
-    dir_derived = os.path.join(info["dir_run"], "derived")
-    dir_steps = os.path.join(dir_derived, "timeseries", "timesteps")
-    dir_figures = os.path.join(dir_derived, "figures")
+    dir_steps = os.path.join(info["dir_derived"], "timeseries", "timesteps")
 
     if not os.path.exists(info["dir_plots"]):
         os.mkdir(info["dir_plots"])
-        logging.info("Created " + info["dir_plots"])
+        mp.logger.info("Created " + info["dir_plots"])
 
-    if not os.path.exists(dir_derived):
-        os.mkdir(os.path.join(dir_derived))
-        logging.info("Created " + dir_derived)
+    if not os.path.exists(info["dir_derived"]):
+        os.mkdir(info["dir_derived"])
+        mp.logger.info("Created " + info["dir_derived"])
     
     if not os.path.exists(dir_steps):
         os.makedirs(os.path.join(dir_steps))
-        print("Created " + dir_steps)
-    
-    if not os.path.exists(dir_figures):
-        os.makedirs(os.path.join(dir_figures))
-        logging.info("Created " + dir_figures)
+        mp.logger.info("Created " + dir_steps)
 
     info['files'] = {}
 
@@ -38,11 +30,13 @@ def setup(info):
 
         for subdir in ["GM_CDF", "IONO-2D_CDF"]:
             if subdir == "GM_CDF":
-                file = open(os.path.join(info['dir_run'],subdir, info['run_name'] + '_GM_cdf_list'), 'r')
+                # Note lower case 'cdf' in _GM_cdf_list
+                file = open(os.path.join(info['dir_run'], subdir, info['run_name'] + '_GM_cdf_list'), 'r')
                 key = "magnetosphere"
                 prefix = ""
             if subdir == "IONO-2D_CDF":
-                file = open(os.path.join(info['dir_run'],subdir, info['run_name'] + '_IE_cdf_list'), 'r')
+                # Note upper case 'CDF' in _GM_CDF_list
+                file = open(os.path.join(info['dir_run'], subdir, info['run_name'] + '_IE_CDF_list'), 'r')
                 key = "ionosphere"
                 prefix = info['run_name'] + '.swmf.' 
 
@@ -67,14 +61,14 @@ def setup(info):
         generate_filelist_txts(info)
 
         info['files']['magnetosphere'] = {}
-        with open(os.path.join(info['dir_run'], 'derived', 'magnetosphere_files.txt'), 'r') as f:
+        with open(os.path.join(info["dir_derived"], 'magnetosphere_files.txt'), 'r') as f:
             for line in f.readlines():
                 items = line.split(' ')
                 time = tuple([int(ti) for ti in items[:6]])
                 info['files']['magnetosphere'][time] = os.path.join(info['dir_run'], items[-1][:-1])
 
         info['files']['ionosphere'] = {}
-        with open(os.path.join(info['dir_run'], 'derived', 'ionosphere_files.txt'), 'r') as f:
+        with open(os.path.join(info["dir_derived"], 'ionosphere_files.txt'), 'r') as f:
             for line in f.readlines():
                 items = line.split(' ')
                 time = tuple([int(ti) for ti in items[:6]])
@@ -87,13 +81,15 @@ def generate_filelist_txts(info):
     import re
     import json
 
+    import magnetopost as mp
+
     dir_run = info["dir_run"]
 
-    fn = os.path.join(dir_run, 'derived/run.info.py')
+    fn = os.path.join(info["dir_derived"], 'run.info.py')
     with open(fn, 'w') as outfile:
         outfile.write(json.dumps(info))
 
-    logging.info("Wrote {}".format(fn))
+    mp.logger.info("Wrote {}".format(fn))
 
     if 'dir_magnetosphere' in info:
         dir_data = os.path.join(dir_run, info['dir_magnetosphere'])
@@ -102,7 +98,7 @@ def generate_filelist_txts(info):
 
     magnetosphere_outs = sorted(os.listdir(dir_data))
 
-    fn = os.path.join(dir_run, 'derived/magnetosphere_files.txt')
+    fn = os.path.join(info["dir_derived"], 'magnetosphere_files.txt')
     k = 0
     with open(fn,'w') as fl:
         regex = r"3d__.*\.out$"
@@ -124,7 +120,7 @@ def generate_filelist_txts(info):
                     assert(fname[30:] == '.out')
                     fl.write(f'{Y} {M} {D} {h} {m} {s} {mil} {dir_data}/{fname}\n')
 
-    logging.info("Wrote {} file names to {}".format(k, fn))
+    mp.logger.info("Wrote {} file names to {}".format(k, fn))
 
     if 'dir_ionosphere' in info:
         dir_data = os.path.join(dir_run, info['dir_ionosphere'])
@@ -133,7 +129,7 @@ def generate_filelist_txts(info):
 
     ionosphere_outs = sorted(os.listdir(dir_data))
 
-    fn = os.path.join(dir_run, 'derived/ionosphere_files.txt')
+    fn = os.path.join(info["dir_derived"], 'ionosphere_files.txt')
     k = 0
     with open(fn,'w') as fl:
         regex = r"i_.*\.tec$"
@@ -155,14 +151,18 @@ def generate_filelist_txts(info):
                     assert(fname[22:] == '.tec')
                     fl.write(f'{Y} {M} {D} {h} {m} {s} {mil} IE/ionosphere/{fname}\n')
 
-    logging.info("Wrote {} file names to {}".format(k, fn))
+    mp.logger.info("Wrote {} file names to {}".format(k, fn))
+
 
 def GetMagnetometerCoordinates(magnetometer, time, csys, ctype, hxway=True):
+
+    from magnetopost.config import defined_magnetometers
 
     if isinstance(magnetometer, str):
         magnetometer = defined_magnetometers[magnetometer]
 
     if hxway:
+        from hxform import hxform as hx
         return hx.transform(np.array(magnetometer.coords), time, magnetometer.csys, csys, ctype_in=magnetometer.ctype, ctype_out=ctype)
     else: 
         import spacepy.coordinates as sc
