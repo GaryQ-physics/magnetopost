@@ -230,6 +230,7 @@ def extract_from_magnetopost_files(info, surface_location, n_steps=None):
 
     bs_hall     = get('bs_hall', iono_dtimes)
     bs_pedersen = get('bs_pedersen', iono_dtimes)
+    #DT why get bs_hall twice???
     bs_hall     = get('bs_hall', iono_dtimes)
 
     cl_msph     = get('cl_msph', msph_dtimes)

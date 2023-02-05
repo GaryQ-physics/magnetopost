@@ -28,7 +28,9 @@ def map_along_dipole_lines(Xyz_D, rMap):
     # Solution of the vector potential equation (proportional to (x^2+y^2)/r^3)
     # so sqrt(xMap^2+yMap^2)/sqrt(x^2+y^2) = sqrt(rMap^3/r^3)
     iHemisphere = int(np.sign(Xyz_D[2]))
-    XyzMap_D = np.empty(3, dtype=np.float32)
+    #DT change float32 to float64
+    #XyzMap_D = np.empty(3, dtype=np.float32)
+    XyzMap_D = np.empty(3, dtype=np.float64)
 
     r = np.linalg.norm(Xyz_D)
     XyRatio = np.sqrt(rMap/r)**3 # ratio of input and mapped X and Y components

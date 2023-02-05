@@ -17,7 +17,9 @@ def get_dipole_field_V(xyz):
 
 @njit # Biot Savart integrand (4pi taken outside)
 def _integrand_bs(x, y, z, x0, jx, jy, jz):
-    integrand = np.empty((3,),dtype=np.float32); integrand[:]=np.nan
+    #DT change float32 to float64
+    #integrand = np.empty((3,),dtype=np.float32); integrand[:]=np.nan
+    integrand = np.empty((3,),dtype=np.float64); integrand[:]=np.nan
 
     r_x = x0[0] - x
     r_y = x0[1] - y
@@ -29,13 +31,16 @@ def _integrand_bs(x, y, z, x0, jx, jy, jz):
         integrand[1] = jz*r_x - jx*r_z
         integrand[:] =  integrand[:]/r**3
     else:
+        #DT replace this with cube const J in one direction what is B at center of cube
         integrand[:] = 0.
 
     return integrand
 
 @njit
 def _integral_bs(X, Y, Z, x0, JX, JY, JZ, Measure):
-    ret = np.zeros((3,), dtype=np.float32)
+    #DT change float32 to float64
+    #ret = np.zeros((3,), dtype=np.float32)
+    ret = np.zeros((3,), dtype=np.float64)
     for i in range(X.size):
 
         # 'measure' refers to integration measure ( dx, dV, dA, whatever apropriate)
